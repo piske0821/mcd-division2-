@@ -352,6 +352,7 @@
       {
         "name": "突襲者戰鬥裝備",
         "color": "color-green",
+        "coreIcon": "red.png",
         "named": "玩家必備",
         "attrs": [
           {
@@ -379,6 +380,7 @@
       {
         "name": "未來主動權",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -405,6 +407,7 @@
       {
         "name": "餘燼引擎",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -431,6 +434,7 @@
       {
         "name": "日蝕協定",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -457,6 +461,7 @@
       {
         "name": "A & 8 兩對",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -483,6 +488,7 @@
       {
         "name": "頂尖專家",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -509,6 +515,7 @@
       {
         "name": "重新構建 ( 海馬 )",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -535,6 +542,7 @@
       {
         "name": "打破平衡",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -665,6 +673,7 @@
       {
         "name": "奧提茲：修復",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -717,6 +726,7 @@
       {
         "name": "大師",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -743,6 +753,7 @@
       {
         "name": "臨界點",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -769,6 +780,7 @@
       {
         "name": "庇護",
         "color": "color-green",
+        "coreIcon": "blue.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -795,6 +807,7 @@
       {
         "name": "奧提茲：火噬",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -821,6 +834,7 @@
       {
         "name": "騎士",
         "color": "color-green",
+        "coreIcon": "blue.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -847,6 +861,7 @@
       {
         "name": "本影倡議",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -873,6 +888,7 @@
       {
         "name": "裝配工",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -899,6 +915,7 @@
       {
         "name": "鑄造廠堡壘",
         "color": "color-green",
+        "coreIcon": "blue.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -925,6 +942,7 @@
       {
         "name": "系統毀損",
         "color": "color-green",
+        "coreIcon": "red.png",
         "named": "暗區限定",
         "attrs": [
           {
@@ -952,6 +970,7 @@
       {
         "name": "政令進行式",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -978,6 +997,7 @@
       {
         "name": "真實愛國者",
         "color": "color-green",
+        "coreIcon": "blue.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -1004,6 +1024,7 @@
       {
         "name": "固線連結",
         "color": "color-green",
+        "coreIcon": "yellow.png",
         "spoiler": "<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>製作材料： M-面具：華盛頓大飯店、C-胸甲：傑佛遜貿易中心、H-槍套：航空及太空博物館、B-背包：聯邦急難地下碉堡、G-手套：林肯紀念堂、K-護膝：銀行總部（部位零件 入侵/非入侵 尾王機率掉落）；固線連結科技：副本外黑色獠牙</p></details>",
         "attrs": [
           {
@@ -1031,6 +1052,7 @@
       {
         "name": "談判者困境",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
@@ -1057,6 +1079,7 @@
       {
         "name": "先鋒部隊",
         "color": "color-green",
+        "coreIcon": "red.png",
         "attrs": [
           {
             "text": "2件裝備加成",
