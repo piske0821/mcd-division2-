@@ -2,6 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mc Donalds - 全境封鎖2 小工具</title>
     <style>
         body {
@@ -380,6 +381,30 @@
         }
         .btn-cancel { background-color: #4f545c; color: #fff; margin-right: 10px; }
         .btn-save { background-color: #248046; color: #fff; }
+
+        /* === 手機版響應式調整 (RWD) === */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                min-height: 100vh;
+            }
+            .sidebar {
+                width: 100%;
+                max-height: 220px;
+                border-bottom: 2px solid #1e1f22;
+            }
+            .main-content {
+                padding: 15px;
+            }
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+            .modal-content {
+                width: 90% !important;
+                padding: 15px;
+            }
+        }
     </style>
 </head>
 <body onclick="hideContextMenu()">
@@ -489,10 +514,8 @@
     </div>
 
     <script>
-        // 🔐 權限控制變數
         let isAdmin = localStorage.getItem('division2_is_admin_v21') === 'true';
 
-        // 標題連續點擊計算變數
         let titleClickCount = 0;
         let titleClickTimer = null;
 
@@ -537,7 +560,6 @@
             }
         });
 
-        // 🛠️ 強制預設資料（不依賴對方的 localStorage 空白狀態）
         const defaultCategories = [
             { id: "cat_weapon", name: "奇特武器資料庫" },
             { id: "cat_armor", name: "奇特裝備資料庫" }
@@ -561,12 +583,10 @@
 
         const defaultDb = {"exoticAR":[{"name":"聖艾爾摩引擎","color":"color-red","effect":"蓋棺論定：\n使用此武器射擊敵人可獲得 1 層疊加。堆疊至 100 層時，下一個彈匣的彈藥就會變成電擊子彈。","named":"突擊步槍首選","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固有配件","val":"+15% 爆擊傷害 +30 子彈 +10% 武器控制力 +15% 爆擊機率"},{"text":"掉落地點","val":"奇特箱、通用戰利品掉落池"},{"text":"製作設計圖","val":"報復行動：真實之子 殺戮小隊"}]},{"name":"大角突擊步槍","color":"color-red","effect":"王牌獵人：\n使用瞄準鏡時，切換至半自動模式，每次攻擊造成的武器傷害變為 450%。\n擊中頭部帶來 +6% 爆頭傷害。可疊加 25 次。疊加已滿時，每 4 秒會衰減 10 層疊加，直到所有疊加效果消失為止。\n擊中頭部能延遲疊加效果衰減。","named":"打BOSS強","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固有配件","val":"+40% 爆頭傷害 +20% 裝彈速度 +20% 穩定度 +20% 準確度"},{"text":"掉落地點","val":"暗區、傳奇難度 Boss 掉落：主線任務、高峰大廈"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 報復結算"}]},{"name":"電容突擊","color":"color-red","effect":"技能電容：\n射擊敵人能堆疊至多 40 層，每一層疊加提供 1.5% 技能傷害。\n在 5 秒後，堆疊效果每秒會衰減 1 層。\n每增加一級技能分階就能提升 7.5% 武器傷害。","named":"電工專用武器","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"對裝甲傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+10% 爆擊機率 +11 子彈 +10% 武器控制力 +30% 爆擊傷害"},{"text":"掉落地點","val":"高峰大廈登發過程中達成任意 5 項高峰挑戰"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 殺戮小隊"}]},{"name":"帶鷹人","color":"color-red","effect":"雄鷹突擊：\n準確度隨著持續射擊增加，最多 +30%。\n爆頭擊殺會得到「堅持」增益效果，持續 15 秒。\n「堅持」的強度於擊中身體時增加 1% ，爆頭時增加 5%。\n\n堅持：\n在增益效果消失前，能延遲 40-80% 的承傷。\n在增益效果啟用時，擊殺敵人會減少總計的延遲傷害，最多 3 次擊殺達到 100% 減免。","spoiler":"<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>掠奪戰-黑暗時刻 (一般) (舊8)<br>&nbsp; -每個角色每週每週第一次擊敗各關卡 Boss 時機率掉落。<br>&nbsp; -擊敗第四 Boss 後可用 5 把黑暗時刻鑰匙開啟運輸機上貯藏箱，機率開出 (10%)。<br>&nbsp; ( 每個角色每週可開啟略奪戰地圖中 4 個鑰匙箱各一次，共可取得 4 把鑰匙 )<br>&nbsp; ( 每次擊敗第四Boss高機率掉落 1 把鑰匙，每週不限次數 )</p></details>","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+15% 爆擊機率 +30子彈 +10% 武器控制力 +20% 爆擊傷害"},{"text":"掉落地點","val":"掠奪戰-黑暗時刻 ( 舊8 )、暗區"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 報復結算"}]},{"name":"變色龍","color":"color-red","effect":"適應本能：\n攻擊頭部30次能獲得 +20%爆擊機率與+50%爆擊傷害，持續45秒。\n攻擊軀幹65次能獲得 +90%武器傷害，持續45秒。\n攻擊腿部20次能獲得 +150%裝彈速度，持續45秒。\n離開戰鬥時重置增益效果。","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+15% 準確度 +20 子彈 +10% 穩定度 +10% 準確度"},{"text":"掉落地點","val":"奇特箱、通用戰利品掉落池、報復行動設計圖"},{"text":"製作設計圖","val":"報復行動：鬣狗 報復結算"}]},{"name":"突擊步槍 第三條屬性推薦","color":"color-gray","effect":"掩體傷","attrs":[]}],"ch_1790502780724":[]};
 
-        // 如果 localStorage 沒有資料，就直接寫入預設的完整資料
         let categories = JSON.parse(localStorage.getItem('division2_categories_v21')) || defaultCategories;
         let channels = JSON.parse(localStorage.getItem('division2_channels_v21')) || defaultChannels;
         let db = JSON.parse(localStorage.getItem('division2_db_v21')) || defaultDb;
 
-        // 確保重新整理或初次開啟時同步存入
         localStorage.setItem('division2_categories_v21', JSON.stringify(categories));
         localStorage.setItem('division2_channels_v21', JSON.stringify(channels));
         localStorage.setItem('division2_db_v21', JSON.stringify(db));
