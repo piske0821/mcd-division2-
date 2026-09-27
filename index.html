@@ -134,9 +134,11 @@
             gap: 10px;
             margin-bottom: 20px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .search-bar {
             flex: 1;
+            min-width: 200px;
             padding: 10px;
             background-color: #1e1f22;
             border: none;
@@ -167,6 +169,18 @@
             display: none;
         }
         .paste-btn:hover { background-color: #1a6335; }
+
+        .export-btn {
+            padding: 10px 15px;
+            background-color: #e67e22;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+        }
+        .export-btn:hover { background-color: #d35400; }
         
         /* 卡片網格 */
         .card-grid {
@@ -259,7 +273,7 @@
             display: flex;
             gap: 5px;
             justify-content: flex-end;
-            display: none; /* 預設隱藏 */
+            display: none;
         }
         .card-actions button {
             padding: 3px 8px;
@@ -382,7 +396,7 @@
         .btn-cancel { background-color: #4f545c; color: #fff; margin-right: 10px; }
         .btn-save { background-color: #248046; color: #fff; }
 
-        /* === 手機版響應式調整 (RWD) === */
+        /* 手機版響應式 */
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -417,20 +431,20 @@
                 <button class="sidebar-btn" onclick="openChannelModal()" title="新增頻道">＋頻道</button>
             </div>
         </div>
-        
         <div id="sidebarTree"></div>
     </div>
 
     <div class="main-content">
         <div class="top-controls">
             <input type="text" id="searchInput" class="search-bar" placeholder="搜尋名稱、天賦或屬性..." onkeyup="filterData()">
+            <button id="exportBtn" class="export-btn" onclick="exportDataJson()" style="display:none;">💾 匯出資料</button>
             <button id="pasteBtn" class="paste-btn" onclick="pasteCard()" style="display:none;">📋 貼上卡片</button>
             <button id="addCardMainBtn" class="add-btn" onclick="openModal()" style="display:none;">＋ 新增資料</button>
         </div>
         <div id="cardGrid" class="card-grid"></div>
     </div>
 
-    <!-- Discord 風格右鍵選單 (純文字) -->
+    <!-- 右鍵選單 -->
     <div id="dcContextMenu">
         <div id="menuAddChannel" class="menu-item" onclick="handleMenuAddChannel()" style="display:none;">新增頻道</div>
         <div id="menuMoveUp" class="menu-item" onclick="handleMenuMoveUp()">往上移動</div>
@@ -458,17 +472,17 @@
                 <option value="color-gray">灰色</option>
             </select>
             
-            <label>天賦與效果說明 (支援網址自動連結):</label>
-            <textarea id="inputEffect" rows="3" placeholder="請輸入天賦及效果說明，貼上網址會自動變成超連結..."></textarea>
+            <label>天賦與效果說明:</label>
+            <textarea id="inputEffect" rows="3" placeholder="請輸入天賦及效果說明..."></textarea>
 
             <label class="checkbox-group">
-                <input type="checkbox" id="inputIsSpoiler"> 📦 設為防劇透區塊 (解謎攻略，勾選後會摺疊隱藏)
+                <input type="checkbox" id="inputIsSpoiler"> 📦 設為防劇透區塊 (解謎攻略)
             </label>
-            <textarea id="inputSpoilerContent" rows="3" placeholder="請在此輸入詳細的解謎步驟或攻略網址..." style="display:none;"></textarea>
+            <textarea id="inputSpoilerContent" rows="3" placeholder="請在此輸入詳細解謎步驟..." style="display:none;"></textarea>
 
-            <label>屬性與取得管道列表 (支援網址):</label>
+            <label>屬性與取得管道列表:</label>
             <div id="attrContainer"></div>
-            <button type="button" class="btn-add-attr" onclick="addAttrRow()">＋ 新增一條屬性/固定配件</button>
+            <button type="button" class="btn-add-attr" onclick="addAttrRow()">＋ 新增一條屬性</button>
 
             <label>備註 / 標籤:</label>
             <input type="text" id="inputNamed" placeholder="例如：突擊步槍 / 核心神兵">
@@ -480,42 +494,38 @@
         </div>
     </div>
 
-    <!-- 新增/編輯類別視窗 -->
+    <!-- 類別視窗 -->
     <div id="categoryModal" class="modal">
         <div class="modal-content" style="width: 350px;">
             <h3 id="categoryModalTitle">新增類別</h3>
             <input type="hidden" id="editCategoryId" value="">
             <label>類別名稱:</label>
             <input type="text" id="inputCategoryName" placeholder="例如：奇特武器">
-
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeCategoryModal()">取消</button>
-                <button class="btn-save" onclick="saveCategory()">儲存類別</button>
+                <button class="btn-save" onclick="saveCategory()">儲存</button>
             </div>
         </div>
     </div>
 
-    <!-- 新增/編輯頻道視窗 -->
+    <!-- 頻道視窗 -->
     <div id="channelModal" class="modal">
         <div class="modal-content" style="width: 350px;">
             <h3 id="channelModalTitle">新增頻道</h3>
             <input type="hidden" id="editChannelId" value="">
             <label>選擇歸屬類別:</label>
             <select id="inputChannelCategory"></select>
-
             <label>頻道名稱:</label>
             <input type="text" id="inputChannelName" placeholder="例如：突擊步槍">
-
             <div class="modal-buttons">
                 <button class="btn-cancel" onclick="closeChannelModal()">取消</button>
-                <button class="btn-save" onclick="saveChannel()">儲存頻道</button>
+                <button class="btn-save" onclick="saveChannel()">儲存</button>
             </div>
         </div>
     </div>
 
     <script>
         let isAdmin = localStorage.getItem('division2_is_admin_v21') === 'true';
-
         let titleClickCount = 0;
         let titleClickTimer = null;
 
@@ -528,10 +538,8 @@
                 }
                 return;
             }
-
             titleClickCount++;
             if (titleClickTimer) clearTimeout(titleClickTimer);
-
             if (titleClickCount >= 4) {
                 titleClickCount = 0;
                 let pwd = prompt('請輸入解鎖密碼：');
@@ -544,9 +552,7 @@
                     alert('密碼錯誤！');
                 }
             } else {
-                titleClickTimer = setTimeout(() => {
-                    titleClickCount = 0;
-                }, 1000);
+                titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 1000);
             }
         }
 
@@ -554,51 +560,75 @@
             if (isAdmin) {
                 document.getElementById('adminSidebarActions').style.display = 'flex';
                 document.getElementById('addCardMainBtn').style.display = 'block';
+                document.getElementById('exportBtn').style.display = 'block';
                 if (copiedCardData) {
                     document.getElementById('pasteBtn').style.display = 'block';
                 }
             }
         });
 
-        const defaultCategories = [
-            { id: "cat_weapon", name: "奇特武器資料庫" },
-            { id: "cat_armor", name: "奇特裝備資料庫" }
-        ];
+        // 極簡防呆預設結構（當找不到 data.json 且無本機資料時使用）
+        const defaultCategories = [{ id: "cat_default", name: "未分類" }];
+        const defaultChannels = [{ id: "ch_default", name: "一般頻道", catId: "cat_default" }];
+        const defaultDb = { "ch_default": [] };
 
-        const defaultChannels = [
-            { id: "exoticAR", name: "突擊步槍", catId: "cat_weapon" },
-            { id: "exoticSMG", name: "衝鋒槍", catId: "cat_weapon" },
-            { id: "exoticLMG", name: "輕機槍", catId: "cat_weapon" },
-            { id: "exoticRifle", name: "步槍", catId: "cat_weapon" },
-            { id: "exoticMMR", name: "精確射手步槍", catId: "cat_weapon" },
-            { id: "exoticShotgun", name: "散彈槍", catId: "cat_weapon" },
-            { id: "exoticPistol", name: "手槍", catId: "cat_weapon" },
-            { id: "exoticMask", name: "面具", catId: "cat_armor" },
-            { id: "exoticArmor", name: "胸甲", catId: "cat_armor" },
-            { id: "exoticBackpack", name: "背包", catId: "cat_armor" },
-            { id: "exoticHolster", name: "槍套", catId: "cat_armor" },
-            { id: "exoticGloves", name: "手套", catId: "cat_armor" },
-            { id: "exoticKneepads", name: "護膝", catId: "cat_armor" },
-            { id: "ch_1790502780724", name: "頻道 1", catId: "cat_weapon" },
-            { id: "ch_1790521288750", name: "套裝組", catId: "cat_armor" }
-        ];
-
-        const defaultDb = {"exoticAR":[{"name":"配裝建議","color":"color-gold","attrs":[{"text":"第三條屬性推薦","val":"掩體傷"},{"text":"最推薦的武器","val":"聖艾爾摩引擎"},{"text":"適合的套裝組","val":"突襲 / 打破平衡"}]},{"name":"聖艾爾摩引擎","color":"color-red","effect":"蓋棺論定：\n使用此武器射擊敵人可獲得 1 層疊加。堆疊至 100 層時，下一個彈匣的彈藥就會變成電擊子彈。","named":"突擊步槍首選","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固有配件","val":"+15% 爆擊傷害 +30 子彈 +10% 武器控制力 +15% 爆擊機率"},{"text":"掉落地點","val":"奇特箱、通用戰利品掉落池"},{"text":"製作設計圖","val":"報復行動：真實之子 殺戮小隊"}]},{"name":"大角突擊步槍","color":"color-red","effect":"王牌獵人：\n使用瞄準鏡時，切換至半自動模式，每次攻擊造成的武器傷害變為 450%。\n擊中頭部帶來 +6% 爆頭傷害。可疊加 25 次。疊加已滿時，每 4 秒會衰減 10 層疊加，直到所有疊加效果消失為止。\n擊中頭部能延遲疊加效果衰減。","named":"打BOSS強","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固有配件","val":"+40% 爆頭傷害 +20% 裝彈速度 +20% 穩定度 +20% 準確度"},{"text":"掉落地點","val":"暗區、傳奇難度 Boss 掉落：主線任務、高峰大廈"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 報復結算"}]},{"name":"電容突擊","color":"color-red","effect":"技能電容：\n射擊敵人能堆疊至多 40 層，每一層疊加提供 1.5% 技能傷害。\n在 5 秒後，堆疊效果每秒會衰減 1 層。\n每增加一級技能分階就能提升 7.5% 武器傷害。","named":"電工專用武器","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"對裝甲傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+10% 爆擊機率 +11 子彈 +10% 武器控制力 +30% 爆擊傷害"},{"text":"掉落地點","val":"高峰大廈登發過程中達成任意 5 項高峰挑戰"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 殺戮小隊"}]},{"name":"帶鷹人","color":"color-red","effect":"雄鷹突擊：\n準確度隨著持續射擊增加，最多 +30%。\n爆頭擊殺會得到「堅持」增益效果，持續 15 秒。\n「堅持」的強度於擊中身體時增加 1% ，爆頭時增加 5%。\n\n堅持：\n在增益效果消失前，能延遲 40-80% 的承傷。\n在增益效果啟用時，擊殺敵人會減少總計的延遲傷害，最多 3 次擊殺達到 100% 減免。","spoiler":"<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>掠奪戰-黑暗時刻 (一般) (舊8)<br>&nbsp; -每個角色每週第一次擊敗各關卡 Boss 時機率掉落。<br>&nbsp; -擊敗第四 Boss 後可用 5 把黑暗時刻鑰匙開啟運輸機上貯藏箱，機率開出 (10%)。<br>&nbsp; ( 每個角色每週可開啟略奪戰地圖中 4 個鑰匙箱各一次，共可取得 4 把鑰匙 )<br>&nbsp; ( 每次擊敗第四Boss高機率掉落 1 把鑰匙，每週不限次數 )</p></details>","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+15% 爆擊機率 +30子彈 +10% 武器控制力 +20% 爆擊傷害"},{"text":"掉落地點","val":"掠奪戰-黑暗時刻 ( 舊8 )、暗區"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 報復結算"}]},{"name":"變色龍","color":"color-red","effect":"適應本能：\n攻擊頭部30次能獲得 +20%爆擊機率與+50%爆擊傷害，持續45秒。\n攻擊軀幹65次能獲得 +90%武器傷害，持續45秒。\n攻擊腿部20次能獲得 +150%裝彈速度，持續45秒。\n離開戰鬥時重置增益效果。","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+15% 準確度 +20 子彈 +10% 穩定度 +10% 準確度"},{"text":"掉落地點","val":"奇特箱、通用戰利品掉落池、報復行動設計圖"},{"text":"製作設計圖","val":"報復行動：鬣狗 報復結算"}]}],"ch_1790502780724":[{"name":"聖艾爾摩引擎","color":"color-red","effect":"蓋棺論定：\n使用此武器射擊敵人可獲得 1 層疊加。堆疊至 100 層時，下一個彈匣的彈藥就會變成電擊子彈。","named":"突擊步槍首選","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固有配件","val":"+15% 爆擊傷害 +30 子彈 +10% 武器控制力 +15% 爆擊機率"},{"text":"掉落地點","val":"奇特箱、通用戰利品掉落池"},{"text":"製作設計圖","val":"報復行動：真實之子 殺戮小隊"}]}],"ch_1790521288750":[{"name":"範本","color":"color-green","attrs":[{"text":"2件裝備加成","val":"-"},{"text":"3件裝備加成","val":"-"},{"text":"4件裝備加成","val":"-"},{"text":"胸甲天賦","val":"-"},{"text":"背包天賦","val":"-"}]},{"name":"餘燼引擎","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+8% 技能效率"},{"text":"3件裝備加成","val":"+30% 狀態效果"},{"text":"4件裝備加成","val":"自燃： 你施加的每個狀態效果都有40%的機率同時對敵人施加燃燒效果。如果最初施加的狀態效果是燃燒，敵人在燃燒效果持續期間將受到+25%燃燒傷害。"},{"text":"胸甲天賦","val":"燃點： 將自燃施加燃燒效果的機率提高至 60%。"},{"text":"背包天賦","val":"熾熱高溫： 將自燃的燃燒傷害減益持續時間提高 50%。"}]},{"name":"奧提茲：修復","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+8% 技能效率"},{"text":"3件裝備加成","val":"+60% 修復技能"},{"text":"4件裝備加成","val":"奧提茲迅速施用奈米機器原型： 治療技能的持續時間與範圍減少 90%，但治療效率提升 150%。使用技能治療友軍時，會賦予 30% 危害防護，持續 10 秒。每位友軍的冷卻時間：10 秒。"},{"text":"胸甲天賦","val":"過載奈米機器： 使治療效率加成從 150% 提升至 225%。"},{"text":"背包天賦","val":"改良阻尼器： 使範圍與持續時間的減益從 90% 降低至 25%。"}]},{"name":"核心力量","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+10% 武器控制力"},{"text":"3件裝備加成","val":"+5% 武器傷害、+5% 總裝甲值、+5% 技能效率"},{"text":"4件裝備加成","val":"核心訓練： 你裝備上的每個核心會獲得另外兩種核心加成的 40% 加成。加成啟用期間，技能分階會視為 15% 技能效率。此裝備組中除了背包以外的所有裝備，都會自帶隨機核心。"},{"text":"胸甲天賦","val":"內核心： 從其他核心獲得的加成從 40% 提升至 75%。"},{"text":"背包天賦","val":"外核心： 此天賦不會直接改變核心訓練天賦。此背包具有三個核心屬性。"}]},{"name":"鎖定專精","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+10% 武器傷害"},{"text":"3件裝備加成","val":"+30% 武器控制力"},{"text":"4件裝備加成","val":"國土同胞： 射擊敵人會將其標記 10 秒。被標記的敵人死亡時，包含你在內每一名隊友或技能參與擊殺，都能獲得一層 3% 武器傷害以及 3% 爆擊傷害加成。最多可疊加 35 層，每 10 秒會衰減一層。每次最多能標記 4 名目標。"},{"text":"胸甲天賦","val":"人人為我： 標記的數量由 4 提升至 8。"},{"text":"背包天賦","val":"我為人人： 每層武器傷害加成由 3% 提升至 6%。"}]},{"name":"打破平衡","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+30% 彈匣容量"},{"text":"3件裝備加成","val":"+30% 輕機槍傷害"},{"text":"4件裝備加成","val":"節流控制： 射擊可累加層效果，最多 50 層。每層提供 +0.5% 武器控制力與 +5% 爆擊傷害。未射擊時，每秒失去 6 層。如果有敵人受到壓制，則不會失去疊加。"},{"text":"胸甲天賦","val":"續航力： 最大層數從 50 提升至 75。"},{"text":"背包天賦","val":"失控： 每層獲得的爆擊傷害從 5% 提升至 8%。"}]},{"name":"精密組裝","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+15% 技能加速"},{"text":"3件裝備加成","val":"+60% 修復技能、+40% 爆炸抗性"},{"text":"4件裝備加成","val":"群聚增效： 你的蜂巢或智能掩護範圍內每多一名友方特工，你都能獲得 +1 技能分階。當達到技能分階 6，且至少有一名友方特工在你的蜂巢或智能掩護範圍內超過 4 秒，可觸發系統過載，持續 15 秒。冷卻時間為 40 秒。迫擊砲與敵方技能進入你的蜂巢或智能掩護範圍內時會被摧毀。冷卻時間為 10 秒。你的蜂巢或智能掩護範圍內每多一名友方特工，冷卻時間都可縮短 20%。"},{"text":"胸甲天賦","val":"集體意識： 使系統過載的冷卻時間從 40 縮短至 25。"},{"text":"背包天賦","val":"智慧合作： 使摧毀迫擊砲與敵方技能的冷卻時間從 10 縮短至 1。"}]},{"name":"重新構建 ( 海馬 )","color":"color-green","attrs":[{"text":"2件裝備加成","val":"15% 狀態效果"},{"text":"3件裝備加成","val":"+25% 技能傷害"},{"text":"4件裝備加成","val":"悉數奉還： 你技能所造成傷害的 10% 可用於恢復你的裝甲。你的盟友會獲得你技能所造成傷害 20% 的裝甲恢復量。"},{"text":"胸甲天賦","val":"興趣漸深： 提升來自悉數奉還的裝甲恢復量，從 10% 提升至 25%，以及從 20% 提升至 35%。"},{"text":"背包天賦","val":"超量修復： 在裝甲值全滿時，透過悉數奉還獲得的修復效果將轉化為加成裝甲，最多可達你總裝甲值的 80%。此效果不適用於盟友。"}]},{"name":"大師","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+15% 武器控制力、+15% 彈匣容量"},{"text":"3件裝備加成","val":"+15% 武器傷害"},{"text":"4件裝備加成","val":"以霰彈槍、衝鋒槍和手槍擊殺一名距離超過 25 公尺的敵人可造成 +40% 武器傷害；以突擊步槍和輕機槍擊殺則能造成 +20% 武器傷害 並提供 25% 加成裝甲，持續 15 秒。以射手步槍和步槍擊殺一名 25 公尺內的敵人可造成 +40% 武器傷害；以突擊步槍和輕機槍擊殺則能造成 +20% 武器傷害 與 +30% 爆頭傷害，持續 15 秒。交錯擊殺上述兩種距離範圍的敵人可累積疊加效果。疊加至 4 層 時，會帶來 2 倍加成並觸發，持續 15 秒。加成生效期間不會繼續疊加。"},{"text":"胸甲天賦","val":"極強： 給予交響曲雙倍武器傷害。"},{"text":"背包天賦","val":"漸快： 將交響曲雙倍增效效果所需的疊加層數從 4 調降至 3。"}]},{"name":"臨界點","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+30% 步槍傷害、+30% 射手步槍傷害"},{"text":"3件裝備加成","val":"+30% 爆頭傷害、+30% 武器控制力"},{"text":"4件裝備加成","val":"卓越連狙： 以步槍或射手步槍命中目標可造成疊加效果。最大疊加與武器的彈匣容量相同。每層疊加能於裝填時提供 +2% 武器控制力與 +4% 武器傷害，持續 20 秒。加成生效期間不需要疊加。倒數計時結束會補充彈匣。在加成效果生效期間切換武器會中止效果，並且補充你的彈匣。非加成效果生效期間切換武器則會移除所有疊加，並且補充彈匣。"},{"text":"胸甲天賦","val":"Point of no Return： 將卓越連狙加成倒數計時從 20 秒 延長至 40 秒。"},{"text":"背包天賦","val":"連狙榮耀： 將卓越連狙的武器傷害加成從 4% 提升至 9%。"}]},{"name":"庇護","color":"color-green","attrs":[{"text":"2件裝備加成","val":"+70% 生命值"},{"text":"3件裝備加成","val":"+15% 總裝甲值"},{"text":"4件裝備加成","val":"堅忍： 每多一名鎖定你的敵人，傷害抗性會增加 4%。此加成將乘以 1.X，X 為你的團隊特工人數。"},{"text":"胸甲天賦","val":"欺瞞： 鎖定誘餌的敵人可納入堅忍傷害抗性加成的計算。"},{"text":"背包天賦","val":"聚乙烯鍍層： 將堅忍傷害抗性加成從 4% 提升到 5%。"}]},{"name":"範本","color":"color-green","attrs":[{"text":"2件裝備加成","val":"-"},{"text":"3件裝備加成","val":"-"},{"text":"4件裝備加成","val":"-"},{"text":"胸甲天賦","val":"-"},{"text":"背包天賦","val":"-"}]}],"ch_1790522521090":[]};
-
-        let categories = JSON.parse(localStorage.getItem('division2_categories_v21')) || defaultCategories;
-        let channels = JSON.parse(localStorage.getItem('division2_channels_v21')) || defaultChannels;
-        let db = JSON.parse(localStorage.getItem('division2_db_v21')) || defaultDb;
-
-        localStorage.setItem('division2_categories_v21', JSON.stringify(categories));
-        localStorage.setItem('division2_channels_v21', JSON.stringify(channels));
-        localStorage.setItem('division2_db_v21', JSON.stringify(db));
-
-        let currentTab = channels.length > 0 ? channels[0].id : '';
+        let categories = [];
+        let channels = [];
+        let db = {};
+        let currentTab = '';
         let collapsedCategories = JSON.parse(localStorage.getItem('division2_collapsed_v21')) || {};
         let contextMenuTarget = null;
         let draggedChannelId = null;
         let draggedCardIndex = null;
         let copiedCardData = null;
+
+        // 初始化載入：優先讀取 data.json
+        async function initData() {
+            try {
+                let response = await fetch('data.json');
+                if (response.ok) {
+                    let jsonData = await response.json();
+                    categories = jsonData.categories || defaultCategories;
+                    channels = jsonData.channels || defaultChannels;
+                    db = jsonData.db || defaultDb;
+                } else {
+                    loadFromLocalStorage();
+                }
+            } catch (e) {
+                loadFromLocalStorage();
+            }
+
+            if (!channels.some(ch => ch.id === currentTab)) {
+                currentTab = channels.length > 0 ? channels[0].id : '';
+            }
+            renderSidebar();
+            filterData();
+        }
+
+        function loadFromLocalStorage() {
+            categories = JSON.parse(localStorage.getItem('division2_categories_v21')) || defaultCategories;
+            channels = JSON.parse(localStorage.getItem('division2_channels_v21')) || defaultChannels;
+            db = JSON.parse(localStorage.getItem('division2_db_v21')) || defaultDb;
+            currentTab = channels.length > 0 ? channels[0].id : '';
+        }
+
+        // 匯出資料為 data.json 檔案
+        function exportDataJson() {
+            if (!isAdmin) return;
+            const dataToExport = {
+                categories: categories,
+                channels: channels,
+                db: db
+            };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataToExport, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "data.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            alert('已成功匯出 data.json！請將此檔案上傳到你的 GitHub 專案根目錄中覆蓋即可。');
+        }
 
         document.getElementById('inputIsSpoiler').addEventListener('change', function() {
             const spoilerBox = document.getElementById('inputSpoilerContent');
@@ -610,14 +640,12 @@
             let replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
             let replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
             let replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-            replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank" rel="noopener noreferrer">$2</a>');
-            return replacedText;
+            return replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank" rel="noopener noreferrer">$2</a>');
         }
 
         function renderSidebar() {
             const container = document.getElementById('sidebarTree');
             let html = '';
-            
             categories.forEach(cat => {
                 let catChannels = channels.filter(ch => ch.catId === cat.id);
                 let isCollapsed = collapsedCategories[cat.id] ? 'collapsed' : '';
@@ -638,10 +666,7 @@
                     let chContextAttr = isAdmin ? `oncontextmenu="showContextMenu(event, 'ch', '${ch.id}')"` : '';
 
                     html += `
-                        <div class="channel-item ${isActive}" 
-                             ${chDragAttr}
-                             onclick="switchTab('${ch.id}')" 
-                             ${chContextAttr}>
+                        <div class="channel-item ${isActive}" ${chDragAttr} onclick="switchTab('${ch.id}')" ${chContextAttr}>
                             <span class="channel-name"># ${ch.name}</span>
                         </div>
                     `;
@@ -651,82 +676,30 @@
             container.innerHTML = html;
         }
 
-        function dragStart(e, chId) {
-            if (!isAdmin) return;
-            draggedChannelId = chId;
-            e.target.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', chId);
-        }
-
-        function dragEnd(e) {
-            if (!isAdmin) return;
-            draggedChannelId = null;
-            e.target.classList.remove('dragging');
-            document.querySelectorAll('.category-group').forEach(el => el.classList.remove('drag-over'));
-        }
-
-        function allowDrop(e, catId) {
-            if (!isAdmin) return;
-            e.preventDefault();
-            const group = document.getElementById(`cat_group_${catId}`);
-            if (group) group.classList.add('drag-over');
-        }
-
-        function leaveDrop(e, catId) {
-            if (!isAdmin) return;
-            const group = document.getElementById(`cat_group_${catId}`);
-            if (group) group.classList.remove('drag-over');
-        }
-
+        function dragStart(e, chId) { if (!isAdmin) return; draggedChannelId = chId; e.target.classList.add('dragging'); }
+        function dragEnd(e) { if (!isAdmin) return; draggedChannelId = null; e.target.classList.remove('dragging'); document.querySelectorAll('.category-group').forEach(el => el.classList.remove('drag-over')); }
+        function allowDrop(e, catId) { if (!isAdmin) return; e.preventDefault(); document.getElementById(`cat_group_${catId}`).classList.add('drag-over'); }
+        function leaveDrop(e, catId) { if (!isAdmin) return; document.getElementById(`cat_group_${catId}`).classList.remove('drag-over'); }
         function dropChannel(e, targetCatId) {
             if (!isAdmin) return;
             e.preventDefault();
             if (!draggedChannelId) return;
-
             let ch = channels.find(c => c.id === draggedChannelId);
-            if (ch) {
-                ch.catId = targetCatId;
-                saveAndSync();
-            }
+            if (ch) { ch.catId = targetCatId; saveAndSync(); }
         }
 
-        function cardDragStart(e, index) {
-            if (!isAdmin) return;
-            draggedCardIndex = index;
-            e.target.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', index);
-        }
-
-        function cardDragEnd(e) {
-            if (!isAdmin) return;
-            draggedCardIndex = null;
-            e.target.classList.remove('dragging');
-            document.querySelectorAll('.card').forEach(el => el.classList.remove('drag-over'));
-        }
-
-        function cardDragOver(e) {
-            if (!isAdmin) return;
-            e.preventDefault();
-            const card = e.target.closest('.card');
-            if (card) {
-                document.querySelectorAll('.card').forEach(el => el.classList.remove('drag-over'));
-                card.classList.add('drag-over');
-            }
-        }
-
+        function cardDragStart(e, index) { if (!isAdmin) return; draggedCardIndex = index; e.target.classList.add('dragging'); }
+        function cardDragEnd(e) { if (!isAdmin) return; draggedCardIndex = null; document.querySelectorAll('.card').forEach(el => el.classList.remove('dragging', 'drag-over')); }
+        function cardDragOver(e) { if (!isAdmin) return; e.preventDefault(); const card = e.target.closest('.card'); if (card) { document.querySelectorAll('.card').forEach(el => el.classList.remove('drag-over')); card.classList.add('drag-over'); } }
         function cardDrop(e, targetIndex) {
             if (!isAdmin) return;
             e.preventDefault();
             if (draggedCardIndex === null || draggedCardIndex === targetIndex) return;
-
             let targetData = db[currentTab];
             if (!targetData) return;
-
             let movedItem = targetData.splice(draggedCardIndex, 1)[0];
             targetData.splice(targetIndex, 0, movedItem);
-
-            localStorage.setItem('division2_db_v21', JSON.stringify(db));
-            filterData();
+            saveAndSync();
         }
 
         function copyCard(tabKey, index) {
@@ -738,23 +711,18 @@
                 alert(`已複製卡片：「${item.name}」！`);
             }
         }
-
         function pasteCard() {
-            if (!isAdmin) return;
-            if (!copiedCardData || !currentTab) return;
+            if (!isAdmin || !copiedCardData || !currentTab) return;
             if (!db[currentTab]) db[currentTab] = [];
             db[currentTab].push(JSON.parse(JSON.stringify(copiedCardData)));
-            
-            localStorage.setItem('division2_db_v21', JSON.stringify(db));
-            filterData();
+            saveAndSync();
             alert('卡片貼上成功！');
         }
 
         function toggleCategory(catId) {
             collapsedCategories[catId] = !collapsedCategories[catId];
             localStorage.setItem('division2_collapsed_v21', JSON.stringify(collapsedCategories));
-            const group = document.getElementById(`cat_group_${catId}`);
-            if (group) group.classList.toggle('collapsed');
+            document.getElementById(`cat_group_${catId}`).classList.toggle('collapsed');
         }
 
         function showContextMenu(e, type, id) {
@@ -762,115 +730,56 @@
             e.preventDefault();
             e.stopPropagation();
             contextMenuTarget = { type, id };
-            
             const menu = document.getElementById('dcContextMenu');
-            const addChItem = document.getElementById('menuAddChannel');
-            
-            if (type === 'cat') {
-                addChItem.style.display = 'block';
-            } else {
-                addChItem.style.display = 'none';
-            }
-
+            document.getElementById('menuAddChannel').style.display = (type === 'cat') ? 'block' : 'none';
             menu.style.display = 'block';
-            
-            let x = e.clientX;
-            let y = e.clientY;
+            let x = e.clientX, y = e.clientY;
             if (x + 170 > window.innerWidth) x -= 170;
             if (y + 160 > window.innerHeight) y -= 160;
-            
             menu.style.left = x + 'px';
             menu.style.top = y + 'px';
         }
+        function hideContextMenu() { const menu = document.getElementById('dcContextMenu'); if (menu) menu.style.display = 'none'; }
 
-        function hideContextMenu() {
-            const menu = document.getElementById('dcContextMenu');
-            if (menu) menu.style.display = 'none';
-        }
-
-        function handleMenuAddChannel() {
-            if (!isAdmin || !contextMenuTarget || contextMenuTarget.type !== 'cat') return;
-            openChannelModal('', '', contextMenuTarget.id);
-            hideContextMenu();
-        }
-
+        function handleMenuAddChannel() { if (!isAdmin || !contextMenuTarget) return; openChannelModal('', '', contextMenuTarget.id); hideContextMenu(); }
         function handleMenuEdit() {
             if (!isAdmin || !contextMenuTarget) return;
             if (contextMenuTarget.type === 'cat') {
                 let cat = categories.find(c => c.id === contextMenuTarget.id);
                 if (cat) openCategoryModal(cat.id, cat.name);
-            } else if (contextMenuTarget.type === 'ch') {
+            } else {
                 let ch = channels.find(c => c.id === contextMenuTarget.id);
                 if (ch) openChannelModal(ch.id, ch.name, ch.catId);
             }
             hideContextMenu();
         }
-
         function handleMenuDelete() {
             if (!isAdmin || !contextMenuTarget) return;
-            if (contextMenuTarget.type === 'cat') {
-                deleteCategory(contextMenuTarget.id);
-            } else if (contextMenuTarget.type === 'ch') {
-                deleteChannel(contextMenuTarget.id);
-            }
+            if (contextMenuTarget.type === 'cat') deleteCategory(contextMenuTarget.id);
+            else deleteChannel(contextMenuTarget.id);
             hideContextMenu();
         }
-
         function handleMenuMoveUp() {
             if (!isAdmin || !contextMenuTarget) return;
-            if (contextMenuTarget.type === 'cat') {
-                let idx = categories.findIndex(c => c.id === contextMenuTarget.id);
-                if (idx > 0) {
-                    let temp = categories[idx];
-                    categories[idx] = categories[idx - 1];
-                    categories[idx - 1] = temp;
-                    saveAndSync();
-                }
-            } else if (contextMenuTarget.type === 'ch') {
-                let idx = channels.findIndex(c => c.id === contextMenuTarget.id);
-                if (idx > 0) {
-                    let temp = channels[idx];
-                    channels[idx] = channels[idx - 1];
-                    channels[idx - 1] = temp;
-                    saveAndSync();
-                }
-            }
+            let list = contextMenuTarget.type === 'cat' ? categories : channels;
+            let idx = list.findIndex(c => c.id === contextMenuTarget.id);
+            if (idx > 0) { let t = list[idx]; list[idx] = list[idx-1]; list[idx-1] = t; saveAndSync(); }
             hideContextMenu();
         }
-
         function handleMenuMoveDown() {
             if (!isAdmin || !contextMenuTarget) return;
-            if (contextMenuTarget.type === 'cat') {
-                let idx = categories.findIndex(c => c.id === contextMenuTarget.id);
-                if (idx < categories.length - 1) {
-                    let temp = categories[idx];
-                    categories[idx] = categories[idx + 1];
-                    categories[idx + 1] = temp;
-                    saveAndSync();
-                }
-            } else if (contextMenuTarget.type === 'ch') {
-                let idx = channels.findIndex(c => c.id === contextMenuTarget.id);
-                if (idx < channels.length - 1) {
-                    let temp = channels[idx];
-                    channels[idx] = channels[idx + 1];
-                    channels[idx + 1] = temp;
-                    saveAndSync();
-                }
-            }
+            let list = contextMenuTarget.type === 'cat' ? categories : channels;
+            let idx = list.findIndex(c => c.id === contextMenuTarget.id);
+            if (idx < list.length - 1) { let t = list[idx]; list[idx] = list[idx+1]; list[idx+1] = t; saveAndSync(); }
             hideContextMenu();
         }
 
-        function switchTab(tabName) {
-            currentTab = tabName;
-            renderSidebar();
-            filterData();
-        }
+        function switchTab(tabName) { currentTab = tabName; renderSidebar(); filterData(); }
 
         function filterData() {
             const keyword = document.getElementById('searchInput').value.toLowerCase();
             const grid = document.getElementById('cardGrid');
             grid.innerHTML = '';
-
             let targetData = db[currentTab] || [];
 
             targetData.forEach((item, index) => {
@@ -881,7 +790,6 @@
                 if (matchName || matchAttr || matchEffect) {
                     let card = document.createElement('div');
                     card.className = isAdmin ? 'card editable' : 'card';
-                    
                     if (isAdmin) {
                         card.draggable = true;
                         card.setAttribute('ondragstart', `cardDragStart(event, ${index})`);
@@ -890,26 +798,15 @@
                         card.setAttribute('ondrop', `cardDrop(event, ${index})`);
                     }
 
-                    let titleColorClass = item.color || 'color-gold';
-                    let html = `<h4 class="${titleColorClass}">${item.name}</h4>`;
-                    
-                    if (item.effect) {
-                        let linkedEffect = linkify(item.effect);
-                        html += `<div style="font-size: 13px; color: #dbdee1; margin: 6px 0; white-space: pre-line;">${linkedEffect}</div>`;
-                    }
-                    if (item.spoiler) {
-                        html += `<div>${item.spoiler}</div>`;
-                    }
-                    
+                    let html = `<h4 class="${item.color || 'color-gold'}">${item.name}</h4>`;
+                    if (item.effect) html += `<div style="font-size: 13px; color: #dbdee1; margin: 6px 0; white-space: pre-line;">${linkify(item.effect)}</div>`;
+                    if (item.spoiler) html += `<div>${item.spoiler}</div>`;
                     if (item.attrs) {
                         item.attrs.forEach(attr => {
-                            let linkedVal = linkify(attr.val);
-                            html += `<div class="attr-item"><span class="attr-text-side">${attr.text}</span><span class="attr-val">${linkedVal}</span></div>`;
+                            html += `<div class="attr-item"><span class="attr-text-side">${attr.text}</span><span class="attr-val">${linkify(attr.val)}</span></div>`;
                         });
                     }
-
                     if (item.named) html += `<div><span class="badge">標籤：${item.named}</span></div>`;
-
                     if (isAdmin) {
                         html += `
                             <div class="card-actions" style="display: flex;">
@@ -919,7 +816,6 @@
                             </div>
                         `;
                     }
-                    
                     card.innerHTML = html;
                     grid.appendChild(card);
                 }
@@ -931,11 +827,7 @@
         }
 
         function openModal() {
-            if (!isAdmin) return;
-            if (!currentTab) {
-                alert('請先選擇頻道！');
-                return;
-            }
+            if (!isAdmin || !currentTab) { alert('請先選擇頻道！'); return; }
             document.getElementById('modalTitle').innerText = '新增資料';
             document.getElementById('editIndex').value = '-1';
             document.getElementById('editTabKey').value = currentTab;
@@ -948,7 +840,6 @@
             document.getElementById('inputNamed').value = '';
             document.getElementById('attrContainer').innerHTML = '';
             addAttrRow('核心屬性', '');
-            addAttrRow('固定配件', '');
             document.getElementById('addModal').style.display = 'flex';
         }
 
@@ -967,26 +858,22 @@
                 document.getElementById('inputIsSpoiler').checked = true;
                 spoilerBox.style.display = 'block';
                 let matchP = item.spoiler.match(/<p[^>]*>([\s\S]*?)<\/p>/);
-                let rawSpoiler = matchP ? matchP[1].replace(/<br\s*[\/]?>/gi, '\n') : '';
-                rawSpoiler = rawSpoiler.replace(/<a[^>]*href="([^"]*)"[^>]*>.*?<\/a>/gim, '$1');
-                spoilerBox.value = rawSpoiler;
+                let raw = matchP ? matchP[1].replace(/<br\s*[\/]?>/gi, '\n') : '';
+                spoilerBox.value = raw.replace(/<a[^>]*href="([^"]*)"[^>]*>.*?<\/a>/gim, '$1');
             } else {
                 document.getElementById('inputIsSpoiler').checked = false;
                 spoilerBox.style.display = 'none';
                 spoilerBox.value = '';
             }
-
             document.getElementById('inputNamed').value = item.named || '';
             
             const container = document.getElementById('attrContainer');
             container.innerHTML = '';
-            if (item.attrs && item.attrs.length > 0) {
+            if (item.attrs) {
                 item.attrs.forEach(attr => {
                     let rawVal = attr.val.replace(/<a[^>]*href="([^"]*)"[^>]*>.*?<\/a>/gim, '$1');
                     addAttrRow(attr.text, rawVal);
                 });
-            } else {
-                addAttrRow('核心屬性', '');
             }
             document.getElementById('addModal').style.display = 'flex';
         }
@@ -997,7 +884,7 @@
             row.className = 'attr-row';
             row.innerHTML = `
                 <input type="text" class="attr-text" placeholder="屬性名稱" value="${text}">
-                <input type="text" class="attr-val-input" placeholder="數值或說明 (可貼網址)" value="${val}">
+                <input type="text" class="attr-val-input" placeholder="數值或說明" value="${val}">
                 <button type="button" class="btn-remove-attr" onclick="this.parentElement.remove()">X</button>
             `;
             container.appendChild(row);
@@ -1009,7 +896,6 @@
             if (!isAdmin) return;
             document.getElementById('editCategoryId').value = id;
             document.getElementById('inputCategoryName').value = name;
-            document.getElementById('categoryModalTitle').innerText = id ? '編輯類別' : '新增類別';
             document.getElementById('categoryModal').style.display = 'flex';
         }
         function closeCategoryModal() { document.getElementById('categoryModal').style.display = 'none'; }
@@ -1019,28 +905,20 @@
             const id = document.getElementById('editCategoryId').value;
             const name = document.getElementById('inputCategoryName').value.trim();
             if (!name) { alert('請填寫類別名稱！'); return; }
-
             if (id) {
                 let cat = categories.find(c => c.id === id);
                 if (cat) cat.name = name;
             } else {
-                const newId = 'cat_' + Date.now();
-                categories.push({ id: newId, name: name });
+                categories.push({ id: 'cat_' + Date.now(), name: name });
             }
             saveAndSync();
             closeCategoryModal();
         }
-
         function deleteCategory(catId) {
-            if (!isAdmin) return;
-            if (confirm('確定要刪除此類別嗎？底下所屬的頻道也會一併被移除！')) {
-                channels = channels.filter(ch => ch.catId !== catId);
-                categories = categories.filter(c => c.id !== catId);
-                if (!channels.some(ch => ch.id === currentTab)) {
-                    currentTab = channels.length > 0 ? channels[0].id : '';
-                }
-                saveAndSync();
-            }
+            if (!isAdmin || !confirm('確定要刪除此類別及其底下所有頻道嗎？')) return;
+            channels = channels.filter(ch => ch.catId !== catId);
+            categories = categories.filter(c => c.id !== catId);
+            saveAndSync();
         }
 
         function openChannelModal(id = '', name = '', catId = '') {
@@ -1048,12 +926,10 @@
             const select = document.getElementById('inputChannelCategory');
             select.innerHTML = '';
             categories.forEach(cat => {
-                let selected = (cat.id === catId) ? 'selected' : '';
-                select.innerHTML += `<option value="${cat.id}" ${selected}>${cat.name}</option>`;
+                select.innerHTML += `<option value="${cat.id}" ${cat.id === catId ? 'selected' : ''}>${cat.name}</option>`;
             });
             document.getElementById('editChannelId').value = id;
             document.getElementById('inputChannelName').value = name;
-            document.getElementById('channelModalTitle').innerText = id ? '編輯頻道' : '新增頻道';
             document.getElementById('channelModal').style.display = 'flex';
         }
         function closeChannelModal() { document.getElementById('channelModal').style.display = 'none'; }
@@ -1064,13 +940,9 @@
             const catId = document.getElementById('inputChannelCategory').value;
             const name = document.getElementById('inputChannelName').value.trim();
             if (!name) { alert('請填寫頻道名稱！'); return; }
-
             if (id) {
                 let ch = channels.find(c => c.id === id);
-                if (ch) {
-                    ch.name = name;
-                    ch.catId = catId;
-                }
+                if (ch) { ch.name = name; ch.catId = catId; }
             } else {
                 const newId = 'ch_' + Date.now();
                 channels.push({ id: newId, name: name, catId: catId });
@@ -1080,15 +952,12 @@
             saveAndSync();
             closeChannelModal();
         }
-
         function deleteChannel(chId) {
-            if (!isAdmin) return;
-            if (confirm('確定要刪除此頻道及其所有卡片資料嗎？')) {
-                channels = channels.filter(ch => ch.id !== chId);
-                delete db[chId];
-                currentTab = channels.length > 0 ? channels[0].id : '';
-                saveAndSync();
-            }
+            if (!isAdmin || !confirm('確定要刪除此頻道及所有卡片嗎？')) return;
+            channels = channels.filter(c => c.id !== chId);
+            delete db[chId];
+            currentTab = channels.length > 0 ? channels[0].id : '';
+            saveAndSync();
         }
 
         function saveData() {
@@ -1107,8 +976,7 @@
             let newItem = { name: name, color: color };
             if (effect) newItem.effect = effect;
             if (isSpoiler && spoilerText) {
-                let linkedSpoilerText = linkify(spoilerText);
-                newItem.spoiler = `<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>${linkedSpoilerText.replace(/\n/g, '<br>')}</p></details>`;
+                newItem.spoiler = `<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>${linkify(spoilerText).replace(/\n/g, '<br>')}</p></details>`;
             }
             if (named) newItem.named = named;
 
@@ -1124,18 +992,14 @@
             if (index === -1) db[targetTab].push(newItem);
             else db[targetTab][index] = newItem;
 
-            localStorage.setItem('division2_db_v21', JSON.stringify(db));
+            saveAndSync();
             closeModal();
-            filterData();
         }
 
         function deleteData(tabKey, index) {
-            if (!isAdmin) return;
-            if (confirm('確定要刪除這筆資料嗎？')) {
-                db[tabKey].splice(index, 1);
-                localStorage.setItem('division2_db_v21', JSON.stringify(db));
-                filterData();
-            }
+            if (!isAdmin || !confirm('確定要刪除這筆資料嗎？')) return;
+            db[tabKey].splice(index, 1);
+            saveAndSync();
         }
 
         function saveAndSync() {
@@ -1147,8 +1011,8 @@
             filterData();
         }
 
-        renderSidebar();
-        filterData();
+        // 啟動執行
+        initData();
     </script>
 </body>
 </html>
