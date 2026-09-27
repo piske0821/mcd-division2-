@@ -1,0 +1,1132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Mc Donalds - 全境封鎖2 小工具</title>
+    <style>
+        body {
+            background-color: #313338;
+            color: #dbdee1;
+            font-family: "Microsoft JhengHei", sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            user-select: none;
+        }
+        /* 左側導覽列 */
+        .sidebar {
+            width: 300px;
+            background-color: #2b2d31;
+            padding: 15px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #35373c;
+        }
+        .sidebar h3 { color: #f2f3f5; font-size: 16px; margin: 0; cursor: pointer; }
+        .sidebar-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .sidebar-btn {
+            background: none;
+            border: none;
+            color: #949ba4;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .sidebar-btn:hover { color: #f2f3f5; }
+
+        /* 類別與頻道樹狀結構 */
+        .category-group {
+            margin-bottom: 6px;
+        }
+        .category-group.drag-over .channel-list {
+            background-color: rgba(88, 101, 242, 0.15);
+            border-radius: 4px;
+            outline: 2px dashed #5865f2;
+        }
+
+        .category-header {
+            font-size: 12px;
+            font-weight: bold;
+            color: #949ba4;
+            text-transform: uppercase;
+            margin: 10px 0 2px 2px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+        }
+        .category-header:hover {
+            color: #dbdee1;
+            background-color: #35373c;
+        }
+        .category-arrow {
+            display: inline-block;
+            transition: transform 0.15s ease;
+            margin-right: 6px;
+            font-size: 10px;
+        }
+        .category-group.collapsed .category-arrow {
+            transform: rotate(-90deg);
+        }
+        .category-group.collapsed .channel-list {
+            display: none;
+        }
+        
+        .channel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-height: 4px;
+            padding: 2px 0;
+        }
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            padding: 7px 8px 7px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #949ba4;
+            font-size: 14px;
+        }
+        .channel-item:hover {
+            background-color: #35373c;
+            color: #dbdee1;
+        }
+        .channel-item.active {
+            background-color: #35373c;
+            color: #f2f3f5; 
+            font-weight: bold;
+        }
+        .channel-item.dragging {
+            opacity: 0.4;
+        }
+        .channel-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 右側主內容區 */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            user-select: text;
+        }
+        .top-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .search-bar {
+            flex: 1;
+            padding: 10px;
+            background-color: #1e1f22;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+        }
+        .search-bar:focus { outline: none; }
+        .add-btn {
+            padding: 10px 15px;
+            background-color: #5865f2;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .add-btn:hover { background-color: #4752c4; }
+
+        .paste-btn {
+            padding: 10px 15px;
+            background-color: #248046;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            display: none;
+        }
+        .paste-btn:hover { background-color: #1a6335; }
+        
+        /* 卡片網格 */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+        .card {
+            background-color: #2b2d31;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border-left: 4px solid #4f545c;
+            position: relative;
+        }
+        .card.editable {
+            cursor: grab;
+        }
+        .card.editable:active {
+            cursor: grabbing;
+        }
+        .card.dragging {
+            opacity: 0.4;
+        }
+        .card.drag-over {
+            border: 2px dashed #5865f2;
+            background-color: rgba(88, 101, 242, 0.1);
+        }
+        
+        /* 品級顏色定義 */
+        .card h4 { margin: 0 0 8px 0; font-size: 17px; }
+        .color-red { color: #ed4245 !important; }
+        .color-gold { color: #faa61a !important; }
+        .color-green { color: #248046 !important; }
+        .color-gray { color: #949ba4 !important; }
+
+        .attr-item {
+            font-size: 13px;
+            margin: 6px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .attr-text-side {
+            font-weight: bold;
+            color: #00b0f4; 
+        }
+        .attr-val { 
+            color: #b9bbbe; 
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .card details {
+            background-color: #1e1f22;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 13px;
+            color: #b9bbbe;
+            border: 1px dashed #faa61a;
+        }
+        .card summary {
+            cursor: pointer;
+            color: #faa61a;
+            font-weight: bold;
+        }
+
+        .card a, .modal-content a {
+            color: #00b0f4;
+            text-decoration: underline;
+        }
+        .card a:hover, .modal-content a:hover {
+            color: #1dc0ff;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #faa61a;
+            color: #000;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-top: 6px;
+        }
+        
+        .card-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 5px;
+            justify-content: flex-end;
+            display: none; /* 預設隱藏 */
+        }
+        .card-actions button {
+            padding: 3px 8px;
+            font-size: 11px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-copy { background-color: #2b4c7e; color: #fff; }
+        .btn-copy:hover { background-color: #3b639e; }
+        .btn-edit { background-color: #4f545c; color: #fff; }
+        .btn-delete { background-color: #ed4245; color: #fff; }
+
+        /* Discord 風格純文字右鍵選單 */
+        #dcContextMenu {
+            display: none;
+            position: fixed;
+            background-color: #111214;
+            border-radius: 4px;
+            padding: 6px;
+            width: 170px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+            z-index: 2000;
+            box-sizing: border-box;
+        }
+        .menu-item {
+            padding: 8px 10px;
+            font-size: 13px;
+            color: #b5bac1;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .menu-item:hover {
+            background-color: #5865f2;
+            color: #fff;
+        }
+        .menu-item.danger:hover {
+            background-color: #da373c;
+            color: #fff;
+        }
+        .menu-divider {
+            height: 1px;
+            background-color: #2b2d31;
+            margin: 4px 0;
+        }
+
+        /* 彈出視窗共用樣式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: #313338;
+            padding: 25px;
+            border-radius: 8px;
+            width: 450px;
+            max-height: 90vh;
+            overflow-y: auto;
+            color: #dbdee1;
+        }
+        .modal-content h3 { margin-top: 0; color: #f2f3f5; }
+        .modal-content input[type="text"], .modal-content textarea, .modal-content select {
+            width: 100%;
+            padding: 8px;
+            margin: 6px 0 12px 0;
+            background-color: #1e1f22;
+            border: 1px solid #222;
+            border-radius: 4px;
+            color: #fff;
+            box-sizing: border-box;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            color: #faa61a;
+            cursor: pointer;
+        }
+        .checkbox-group input { cursor: pointer; width: 16px; height: 16px; margin: 0; }
+        
+        .attr-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+            align-items: center;
+        }
+        .attr-row input { margin: 0; }
+        .btn-remove-attr {
+            background-color: #ed4245;
+            color: #fff;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-add-attr {
+            background-color: #248046;
+            color: #fff;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+        .modal-buttons { text-align: right; margin-top: 15px; }
+        .modal-buttons button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-cancel { background-color: #4f545c; color: #fff; margin-right: 10px; }
+        .btn-save { background-color: #248046; color: #fff; }
+    </style>
+</head>
+<body onclick="hideContextMenu()">
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h3 id="appTitle" onclick="handleTitleClick()">MCD全境2小工具</h3>
+            <div class="sidebar-actions" id="adminSidebarActions" style="display:none;">
+                <button class="sidebar-btn" onclick="openCategoryModal()" title="新增類別">＋類別</button>
+                <button class="sidebar-btn" onclick="openChannelModal()" title="新增頻道">＋頻道</button>
+            </div>
+        </div>
+        
+        <div id="sidebarTree"></div>
+    </div>
+
+    <div class="main-content">
+        <div class="top-controls">
+            <input type="text" id="searchInput" class="search-bar" placeholder="搜尋名稱、天賦或屬性..." onkeyup="filterData()">
+            <button id="pasteBtn" class="paste-btn" onclick="pasteCard()" style="display:none;">📋 貼上卡片</button>
+            <button id="addCardMainBtn" class="add-btn" onclick="openModal()" style="display:none;">＋ 新增資料</button>
+        </div>
+        <div id="cardGrid" class="card-grid"></div>
+    </div>
+
+    <!-- Discord 風格右鍵選單 (純文字) -->
+    <div id="dcContextMenu">
+        <div id="menuAddChannel" class="menu-item" onclick="handleMenuAddChannel()" style="display:none;">新增頻道</div>
+        <div id="menuMoveUp" class="menu-item" onclick="handleMenuMoveUp()">往上移動</div>
+        <div id="menuMoveDown" class="menu-item" onclick="handleMenuMoveDown()">往下移動</div>
+        <div class="menu-divider" id="menuDivider"></div>
+        <div id="menuEdit" class="menu-item" onclick="handleMenuEdit()">編輯</div>
+        <div id="menuDelete" class="menu-item danger" onclick="handleMenuDelete()">刪除</div>
+    </div>
+
+    <!-- 新增/編輯卡片視窗 -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">新增資料</h3>
+            <input type="hidden" id="editIndex" value="-1">
+            <input type="hidden" id="editTabKey" value="">
+            
+            <label>名稱:</label>
+            <input type="text" id="inputName" placeholder="例如：聖艾爾摩引擎">
+
+            <label>裝備名稱顏色:</label>
+            <select id="inputColor">
+                <option value="color-gold">金色 (具名)</option>
+                <option value="color-red">紅色 (奇特)</option>
+                <option value="color-green">綠色</option>
+                <option value="color-gray">灰色</option>
+            </select>
+            
+            <label>天賦與效果說明 (支援網址自動連結):</label>
+            <textarea id="inputEffect" rows="3" placeholder="請輸入天賦及效果說明，貼上網址會自動變成超連結..."></textarea>
+
+            <label class="checkbox-group">
+                <input type="checkbox" id="inputIsSpoiler"> 📦 設為防劇透區塊 (解謎攻略，勾選後會摺疊隱藏)
+            </label>
+            <textarea id="inputSpoilerContent" rows="3" placeholder="請在此輸入詳細的解謎步驟或攻略網址..." style="display:none;"></textarea>
+
+            <label>屬性與取得管道列表 (支援網址):</label>
+            <div id="attrContainer"></div>
+            <button type="button" class="btn-add-attr" onclick="addAttrRow()">＋ 新增一條屬性/固定配件</button>
+
+            <label>備註 / 標籤:</label>
+            <input type="text" id="inputNamed" placeholder="例如：突擊步槍 / 核心神兵">
+
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">取消</button>
+                <button class="btn-save" onclick="saveData()">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯類別視窗 -->
+    <div id="categoryModal" class="modal">
+        <div class="modal-content" style="width: 350px;">
+            <h3 id="categoryModalTitle">新增類別</h3>
+            <input type="hidden" id="editCategoryId" value="">
+            <label>類別名稱:</label>
+            <input type="text" id="inputCategoryName" placeholder="例如：奇特武器">
+
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeCategoryModal()">取消</button>
+                <button class="btn-save" onclick="saveCategory()">儲存類別</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/編輯頻道視窗 -->
+    <div id="channelModal" class="modal">
+        <div class="modal-content" style="width: 350px;">
+            <h3 id="channelModalTitle">新增頻道</h3>
+            <input type="hidden" id="editChannelId" value="">
+            <label>選擇歸屬類別:</label>
+            <select id="inputChannelCategory"></select>
+
+            <label>頻道名稱:</label>
+            <input type="text" id="inputChannelName" placeholder="例如：突擊步槍">
+
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeChannelModal()">取消</button>
+                <button class="btn-save" onclick="saveChannel()">儲存頻道</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 🔐 權限控制變數
+        let isAdmin = localStorage.getItem('division2_is_admin_v21') === 'true';
+
+        // 標題連續點擊計算變數
+        let titleClickCount = 0;
+        let titleClickTimer = null;
+
+        function handleTitleClick() {
+            if (isAdmin) {
+                if (confirm('目前已處於管理模式，是否要登出並上鎖？')) {
+                    localStorage.setItem('division2_is_admin_v21', 'false');
+                    isAdmin = false;
+                    location.reload();
+                }
+                return;
+            }
+
+            titleClickCount++;
+            if (titleClickTimer) clearTimeout(titleClickTimer);
+
+            if (titleClickCount >= 4) {
+                titleClickCount = 0;
+                let pwd = prompt('請輸入解鎖密碼：');
+                if (pwd === '薯條好吃') {
+                    localStorage.setItem('division2_is_admin_v21', 'true');
+                    isAdmin = true;
+                    alert('解鎖成功！已切換為管理員模式。');
+                    location.reload();
+                } else if (pwd !== null) {
+                    alert('密碼錯誤！');
+                }
+            } else {
+                titleClickTimer = setTimeout(() => {
+                    titleClickCount = 0;
+                }, 1000);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (isAdmin) {
+                document.getElementById('adminSidebarActions').style.display = 'flex';
+                document.getElementById('addCardMainBtn').style.display = 'block';
+                if (copiedCardData) {
+                    document.getElementById('pasteBtn').style.display = 'block';
+                }
+            }
+        });
+
+        // 🛠️ 強制預設資料（不依賴對方的 localStorage 空白狀態）
+        const defaultCategories = [
+            { id: "cat_weapon", name: "奇特武器資料庫" },
+            { id: "cat_armor", name: "奇特裝備資料庫" }
+        ];
+
+        const defaultChannels = [
+            { id: "exoticAR", name: "突擊步槍", catId: "cat_weapon" },
+            { id: "exoticSMG", name: "衝鋒槍", catId: "cat_weapon" },
+            { id: "exoticLMG", name: "輕機槍", catId: "cat_weapon" },
+            { id: "exoticRifle", name: "步槍", catId: "cat_weapon" },
+            { id: "exoticMMR", name: "精確射手步槍", catId: "cat_weapon" },
+            { id: "exoticShotgun", name: "散彈槍", catId: "cat_weapon" },
+            { id: "exoticPistol", name: "手槍", catId: "cat_weapon" },
+            { id: "exoticMask", name: "面具", catId: "cat_armor" },
+            { id: "exoticArmor", name: "胸甲", catId: "cat_armor" },
+            { id: "exoticBackpack", name: "背包", catId: "cat_armor" },
+            { id: "exoticHolster", name: "槍套", catId: "cat_armor" },
+            { id: "exoticGloves", name: "手套", catId: "cat_armor" },
+            { id: "exoticKneepads", name: "護膝", catId: "cat_armor" }
+        ];
+
+        const defaultDb = {"exoticAR":[{"name":"聖艾爾摩引擎","color":"color-red","effect":"蓋棺論定：\n使用此武器射擊敵人可獲得 1 層疊加。堆疊至 100 層時，下一個彈匣的彈藥就會變成電擊子彈。","named":"突擊步槍首選","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固有配件","val":"+15% 爆擊傷害 +30 子彈 +10% 武器控制力 +15% 爆擊機率"},{"text":"掉落地點","val":"奇特箱、通用戰利品掉落池"},{"text":"製作設計圖","val":"報復行動：真實之子 殺戮小隊"}]},{"name":"大角突擊步槍","color":"color-red","effect":"王牌獵人：\n使用瞄準鏡時，切換至半自動模式，每次攻擊造成的武器傷害變為 450%。\n擊中頭部帶來 +6% 爆頭傷害。可疊加 25 次。疊加已滿時，每 4 秒會衰減 10 層疊加，直到所有疊加效果消失為止。\n擊中頭部能延遲疊加效果衰減。","named":"打BOSS強","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固有配件","val":"+40% 爆頭傷害 +20% 裝彈速度 +20% 穩定度 +20% 準確度"},{"text":"掉落地點","val":"暗區、傳奇難度 Boss 掉落：主線任務、高峰大廈"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 報復結算"}]},{"name":"電容突擊","color":"color-red","effect":"技能電容：\n射擊敵人能堆疊至多 40 層，每一層疊加提供 1.5% 技能傷害。\n在 5 秒後，堆疊效果每秒會衰減 1 層。\n每增加一級技能分階就能提升 7.5% 武器傷害。","named":"電工專用武器","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"對裝甲傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+10% 爆擊機率 +11 子彈 +10% 武器控制力 +30% 爆擊傷害"},{"text":"掉落地點","val":"高峰大廈登發過程中達成任意 5 項高峰挑戰"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 殺戮小隊"}]},{"name":"帶鷹人","color":"color-red","effect":"雄鷹突擊：\n準確度隨著持續射擊增加，最多 +30%。\n爆頭擊殺會得到「堅持」增益效果，持續 15 秒。\n「堅持」的強度於擊中身體時增加 1% ，爆頭時增加 5%。\n\n堅持：\n在增益效果消失前，能延遲 40-80% 的承傷。\n在增益效果啟用時，擊殺敵人會減少總計的延遲傷害，最多 3 次擊殺達到 100% 減免。","spoiler":"<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>掠奪戰-黑暗時刻 (一般) (舊8)<br>&nbsp; -每個角色每週每週第一次擊敗各關卡 Boss 時機率掉落。<br>&nbsp; -擊敗第四 Boss 後可用 5 把黑暗時刻鑰匙開啟運輸機上貯藏箱，機率開出 (10%)。<br>&nbsp; ( 每個角色每週可開啟略奪戰地圖中 4 個鑰匙箱各一次，共可取得 4 把鑰匙 )<br>&nbsp; ( 每次擊敗第四Boss高機率掉落 1 把鑰匙，每週不限次數 )</p></details>","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+15% 爆擊機率 +30子彈 +10% 武器控制力 +20% 爆擊傷害"},{"text":"掉落地點","val":"掠奪戰-黑暗時刻 ( 舊8 )、暗區"},{"text":"製作設計圖","val":"報復行動：黑色獠牙 報復結算"}]},{"name":"變色龍","color":"color-red","effect":"適應本能：\n攻擊頭部30次能獲得 +20%爆擊機率與+50%爆擊傷害，持續45秒。\n攻擊軀幹65次能獲得 +90%武器傷害，持續45秒。\n攻擊腿部20次能獲得 +150%裝彈速度，持續45秒。\n離開戰鬥時重置增益效果。","attrs":[{"text":"核心屬性","val":"突擊步槍傷害"},{"text":"固定屬性","val":"生命值傷害"},{"text":"隨機屬性","val":"隨機"},{"text":"固定配件","val":"+15% 準確度 +20 子彈 +10% 穩定度 +10% 準確度"},{"text":"掉落地點","val":"奇特箱、通用戰利品掉落池、報復行動設計圖"},{"text":"製作設計圖","val":"報復行動：鬣狗 報復結算"}]},{"name":"突擊步槍 第三條屬性推薦","color":"color-gray","effect":"掩體傷","attrs":[]}],"ch_1790502780724":[]};
+
+        // 如果 localStorage 沒有資料，就直接寫入預設的完整資料
+        let categories = JSON.parse(localStorage.getItem('division2_categories_v21')) || defaultCategories;
+        let channels = JSON.parse(localStorage.getItem('division2_channels_v21')) || defaultChannels;
+        let db = JSON.parse(localStorage.getItem('division2_db_v21')) || defaultDb;
+
+        // 確保重新整理或初次開啟時同步存入
+        localStorage.setItem('division2_categories_v21', JSON.stringify(categories));
+        localStorage.setItem('division2_channels_v21', JSON.stringify(channels));
+        localStorage.setItem('division2_db_v21', JSON.stringify(db));
+
+        let currentTab = channels.length > 0 ? channels[0].id : '';
+        let collapsedCategories = JSON.parse(localStorage.getItem('division2_collapsed_v21')) || {};
+        let contextMenuTarget = null;
+        let draggedChannelId = null;
+        let draggedCardIndex = null;
+        let copiedCardData = null;
+
+        document.getElementById('inputIsSpoiler').addEventListener('change', function() {
+            const spoilerBox = document.getElementById('inputSpoilerContent');
+            spoilerBox.style.display = this.checked ? 'block' : 'none';
+        });
+
+        function linkify(inputText) {
+            if (!inputText) return '';
+            let replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+            let replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+            let replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
+            replacedText = replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank" rel="noopener noreferrer">$2</a>');
+            return replacedText;
+        }
+
+        function renderSidebar() {
+            const container = document.getElementById('sidebarTree');
+            let html = '';
+            
+            categories.forEach(cat => {
+                let catChannels = channels.filter(ch => ch.catId === cat.id);
+                let isCollapsed = collapsedCategories[cat.id] ? 'collapsed' : '';
+                let catContextAttr = isAdmin ? `oncontextmenu="showContextMenu(event, 'cat', '${cat.id}')"` : '';
+                let catDragAttr = isAdmin ? `ondragover="allowDrop(event, '${cat.id}')" ondragleave="leaveDrop(event, '${cat.id}')" ondrop="dropChannel(event, '${cat.id}')"` : '';
+
+                html += `
+                    <div class="category-group ${isCollapsed}" id="cat_group_${cat.id}" ${catDragAttr}>
+                        <div class="category-header" onclick="toggleCategory('${cat.id}')" ${catContextAttr}>
+                            <span class="category-arrow">▼</span>
+                            <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${cat.name}</span>
+                        </div>
+                        <div class="channel-list">
+                `;
+                catChannels.forEach(ch => {
+                    let isActive = currentTab === ch.id ? 'active' : '';
+                    let chDragAttr = isAdmin ? `draggable="true" ondragstart="dragStart(event, '${ch.id}')" ondragend="dragEnd(event)"` : '';
+                    let chContextAttr = isAdmin ? `oncontextmenu="showContextMenu(event, 'ch', '${ch.id}')"` : '';
+
+                    html += `
+                        <div class="channel-item ${isActive}" 
+                             ${chDragAttr}
+                             onclick="switchTab('${ch.id}')" 
+                             ${chContextAttr}>
+                            <span class="channel-name"># ${ch.name}</span>
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function dragStart(e, chId) {
+            if (!isAdmin) return;
+            draggedChannelId = chId;
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', chId);
+        }
+
+        function dragEnd(e) {
+            if (!isAdmin) return;
+            draggedChannelId = null;
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.category-group').forEach(el => el.classList.remove('drag-over'));
+        }
+
+        function allowDrop(e, catId) {
+            if (!isAdmin) return;
+            e.preventDefault();
+            const group = document.getElementById(`cat_group_${catId}`);
+            if (group) group.classList.add('drag-over');
+        }
+
+        function leaveDrop(e, catId) {
+            if (!isAdmin) return;
+            const group = document.getElementById(`cat_group_${catId}`);
+            if (group) group.classList.remove('drag-over');
+        }
+
+        function dropChannel(e, targetCatId) {
+            if (!isAdmin) return;
+            e.preventDefault();
+            if (!draggedChannelId) return;
+
+            let ch = channels.find(c => c.id === draggedChannelId);
+            if (ch) {
+                ch.catId = targetCatId;
+                saveAndSync();
+            }
+        }
+
+        function cardDragStart(e, index) {
+            if (!isAdmin) return;
+            draggedCardIndex = index;
+            e.target.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', index);
+        }
+
+        function cardDragEnd(e) {
+            if (!isAdmin) return;
+            draggedCardIndex = null;
+            e.target.classList.remove('dragging');
+            document.querySelectorAll('.card').forEach(el => el.classList.remove('drag-over'));
+        }
+
+        function cardDragOver(e) {
+            if (!isAdmin) return;
+            e.preventDefault();
+            const card = e.target.closest('.card');
+            if (card) {
+                document.querySelectorAll('.card').forEach(el => el.classList.remove('drag-over'));
+                card.classList.add('drag-over');
+            }
+        }
+
+        function cardDrop(e, targetIndex) {
+            if (!isAdmin) return;
+            e.preventDefault();
+            if (draggedCardIndex === null || draggedCardIndex === targetIndex) return;
+
+            let targetData = db[currentTab];
+            if (!targetData) return;
+
+            let movedItem = targetData.splice(draggedCardIndex, 1)[0];
+            targetData.splice(targetIndex, 0, movedItem);
+
+            localStorage.setItem('division2_db_v21', JSON.stringify(db));
+            filterData();
+        }
+
+        function copyCard(tabKey, index) {
+            if (!isAdmin) return;
+            const item = db[tabKey][index];
+            if (item) {
+                copiedCardData = JSON.parse(JSON.stringify(item));
+                document.getElementById('pasteBtn').style.display = 'block';
+                alert(`已複製卡片：「${item.name}」！`);
+            }
+        }
+
+        function pasteCard() {
+            if (!isAdmin) return;
+            if (!copiedCardData || !currentTab) return;
+            if (!db[currentTab]) db[currentTab] = [];
+            db[currentTab].push(JSON.parse(JSON.stringify(copiedCardData)));
+            
+            localStorage.setItem('division2_db_v21', JSON.stringify(db));
+            filterData();
+            alert('卡片貼上成功！');
+        }
+
+        function toggleCategory(catId) {
+            collapsedCategories[catId] = !collapsedCategories[catId];
+            localStorage.setItem('division2_collapsed_v21', JSON.stringify(collapsedCategories));
+            const group = document.getElementById(`cat_group_${catId}`);
+            if (group) group.classList.toggle('collapsed');
+        }
+
+        function showContextMenu(e, type, id) {
+            if (!isAdmin) return;
+            e.preventDefault();
+            e.stopPropagation();
+            contextMenuTarget = { type, id };
+            
+            const menu = document.getElementById('dcContextMenu');
+            const addChItem = document.getElementById('menuAddChannel');
+            
+            if (type === 'cat') {
+                addChItem.style.display = 'block';
+            } else {
+                addChItem.style.display = 'none';
+            }
+
+            menu.style.display = 'block';
+            
+            let x = e.clientX;
+            let y = e.clientY;
+            if (x + 170 > window.innerWidth) x -= 170;
+            if (y + 160 > window.innerHeight) y -= 160;
+            
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+        }
+
+        function hideContextMenu() {
+            const menu = document.getElementById('dcContextMenu');
+            if (menu) menu.style.display = 'none';
+        }
+
+        function handleMenuAddChannel() {
+            if (!isAdmin || !contextMenuTarget || contextMenuTarget.type !== 'cat') return;
+            openChannelModal('', '', contextMenuTarget.id);
+            hideContextMenu();
+        }
+
+        function handleMenuEdit() {
+            if (!isAdmin || !contextMenuTarget) return;
+            if (contextMenuTarget.type === 'cat') {
+                let cat = categories.find(c => c.id === contextMenuTarget.id);
+                if (cat) openCategoryModal(cat.id, cat.name);
+            } else if (contextMenuTarget.type === 'ch') {
+                let ch = channels.find(c => c.id === contextMenuTarget.id);
+                if (ch) openChannelModal(ch.id, ch.name, ch.catId);
+            }
+            hideContextMenu();
+        }
+
+        function handleMenuDelete() {
+            if (!isAdmin || !contextMenuTarget) return;
+            if (contextMenuTarget.type === 'cat') {
+                deleteCategory(contextMenuTarget.id);
+            } else if (contextMenuTarget.type === 'ch') {
+                deleteChannel(contextMenuTarget.id);
+            }
+            hideContextMenu();
+        }
+
+        function handleMenuMoveUp() {
+            if (!isAdmin || !contextMenuTarget) return;
+            if (contextMenuTarget.type === 'cat') {
+                let idx = categories.findIndex(c => c.id === contextMenuTarget.id);
+                if (idx > 0) {
+                    let temp = categories[idx];
+                    categories[idx] = categories[idx - 1];
+                    categories[idx - 1] = temp;
+                    saveAndSync();
+                }
+            } else if (contextMenuTarget.type === 'ch') {
+                let idx = channels.findIndex(c => c.id === contextMenuTarget.id);
+                if (idx > 0) {
+                    let temp = channels[idx];
+                    channels[idx] = channels[idx - 1];
+                    channels[idx - 1] = temp;
+                    saveAndSync();
+                }
+            }
+            hideContextMenu();
+        }
+
+        function handleMenuMoveDown() {
+            if (!isAdmin || !contextMenuTarget) return;
+            if (contextMenuTarget.type === 'cat') {
+                let idx = categories.findIndex(c => c.id === contextMenuTarget.id);
+                if (idx < categories.length - 1) {
+                    let temp = categories[idx];
+                    categories[idx] = categories[idx + 1];
+                    categories[idx + 1] = temp;
+                    saveAndSync();
+                }
+            } else if (contextMenuTarget.type === 'ch') {
+                let idx = channels.findIndex(c => c.id === contextMenuTarget.id);
+                if (idx < channels.length - 1) {
+                    let temp = channels[idx];
+                    channels[idx] = channels[idx + 1];
+                    channels[idx + 1] = temp;
+                    saveAndSync();
+                }
+            }
+            hideContextMenu();
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            renderSidebar();
+            filterData();
+        }
+
+        function filterData() {
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            const grid = document.getElementById('cardGrid');
+            grid.innerHTML = '';
+
+            let targetData = db[currentTab] || [];
+
+            targetData.forEach((item, index) => {
+                const matchName = item.name.toLowerCase().includes(keyword);
+                const matchAttr = item.attrs ? item.attrs.some(a => a.text.toLowerCase().includes(keyword) || a.val.toLowerCase().includes(keyword)) : false;
+                const matchEffect = item.effect ? item.effect.toLowerCase().includes(keyword) : false;
+                
+                if (matchName || matchAttr || matchEffect) {
+                    let card = document.createElement('div');
+                    card.className = isAdmin ? 'card editable' : 'card';
+                    
+                    if (isAdmin) {
+                        card.draggable = true;
+                        card.setAttribute('ondragstart', `cardDragStart(event, ${index})`);
+                        card.setAttribute('ondragend', `cardDragEnd(event)`);
+                        card.setAttribute('ondragover', `cardDragOver(event)`);
+                        card.setAttribute('ondrop', `cardDrop(event, ${index})`);
+                    }
+
+                    let titleColorClass = item.color || 'color-gold';
+                    let html = `<h4 class="${titleColorClass}">${item.name}</h4>`;
+                    
+                    if (item.effect) {
+                        let linkedEffect = linkify(item.effect);
+                        html += `<div style="font-size: 13px; color: #dbdee1; margin: 6px 0; white-space: pre-line;">${linkedEffect}</div>`;
+                    }
+                    if (item.spoiler) {
+                        html += `<div>${item.spoiler}</div>`;
+                    }
+                    
+                    if (item.attrs) {
+                        item.attrs.forEach(attr => {
+                            let linkedVal = linkify(attr.val);
+                            html += `<div class="attr-item"><span class="attr-text-side">${attr.text}</span><span class="attr-val">${linkedVal}</span></div>`;
+                        });
+                    }
+
+                    if (item.named) html += `<div><span class="badge">標籤：${item.named}</span></div>`;
+
+                    if (isAdmin) {
+                        html += `
+                            <div class="card-actions" style="display: flex;">
+                                <button class="btn-copy" onclick="copyCard('${currentTab}', ${index})">複製</button>
+                                <button class="btn-edit" onclick="openEditModal('${currentTab}', ${index})">編輯</button>
+                                <button class="btn-delete" onclick="deleteData('${currentTab}', ${index})">刪除</button>
+                            </div>
+                        `;
+                    }
+                    
+                    card.innerHTML = html;
+                    grid.appendChild(card);
+                }
+            });
+
+            if (grid.children.length === 0) {
+                grid.innerHTML = `<div style="color: #949ba4; padding: 20px;">此頻道目前沒有資料或找不到符合的搜尋結果...</div>`;
+            }
+        }
+
+        function openModal() {
+            if (!isAdmin) return;
+            if (!currentTab) {
+                alert('請先選擇頻道！');
+                return;
+            }
+            document.getElementById('modalTitle').innerText = '新增資料';
+            document.getElementById('editIndex').value = '-1';
+            document.getElementById('editTabKey').value = currentTab;
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputColor').value = 'color-gold';
+            document.getElementById('inputEffect').value = '';
+            document.getElementById('inputIsSpoiler').checked = false;
+            document.getElementById('inputSpoilerContent').value = '';
+            document.getElementById('inputSpoilerContent').style.display = 'none';
+            document.getElementById('inputNamed').value = '';
+            document.getElementById('attrContainer').innerHTML = '';
+            addAttrRow('核心屬性', '');
+            addAttrRow('固定配件', '');
+            document.getElementById('addModal').style.display = 'flex';
+        }
+
+        function openEditModal(tabKey, index) {
+            if (!isAdmin) return;
+            const item = db[tabKey][index];
+            document.getElementById('modalTitle').innerText = '編輯資料';
+            document.getElementById('editIndex').value = index;
+            document.getElementById('editTabKey').value = tabKey;
+            document.getElementById('inputName').value = item.name || '';
+            document.getElementById('inputColor').value = item.color || 'color-gold';
+            document.getElementById('inputEffect').value = item.effect || '';
+            
+            const spoilerBox = document.getElementById('inputSpoilerContent');
+            if (item.spoiler) {
+                document.getElementById('inputIsSpoiler').checked = true;
+                spoilerBox.style.display = 'block';
+                let matchP = item.spoiler.match(/<p[^>]*>([\s\S]*?)<\/p>/);
+                let rawSpoiler = matchP ? matchP[1].replace(/<br\s*[\/]?>/gi, '\n') : '';
+                rawSpoiler = rawSpoiler.replace(/<a[^>]*href="([^"]*)"[^>]*>.*?<\/a>/gim, '$1');
+                spoilerBox.value = rawSpoiler;
+            } else {
+                document.getElementById('inputIsSpoiler').checked = false;
+                spoilerBox.style.display = 'none';
+                spoilerBox.value = '';
+            }
+
+            document.getElementById('inputNamed').value = item.named || '';
+            
+            const container = document.getElementById('attrContainer');
+            container.innerHTML = '';
+            if (item.attrs && item.attrs.length > 0) {
+                item.attrs.forEach(attr => {
+                    let rawVal = attr.val.replace(/<a[^>]*href="([^"]*)"[^>]*>.*?<\/a>/gim, '$1');
+                    addAttrRow(attr.text, rawVal);
+                });
+            } else {
+                addAttrRow('核心屬性', '');
+            }
+            document.getElementById('addModal').style.display = 'flex';
+        }
+
+        function addAttrRow(text = '', val = '') {
+            const container = document.getElementById('attrContainer');
+            const row = document.createElement('div');
+            row.className = 'attr-row';
+            row.innerHTML = `
+                <input type="text" class="attr-text" placeholder="屬性名稱" value="${text}">
+                <input type="text" class="attr-val-input" placeholder="數值或說明 (可貼網址)" value="${val}">
+                <button type="button" class="btn-remove-attr" onclick="this.parentElement.remove()">X</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function closeModal() { document.getElementById('addModal').style.display = 'none'; }
+
+        function openCategoryModal(id = '', name = '') {
+            if (!isAdmin) return;
+            document.getElementById('editCategoryId').value = id;
+            document.getElementById('inputCategoryName').value = name;
+            document.getElementById('categoryModalTitle').innerText = id ? '編輯類別' : '新增類別';
+            document.getElementById('categoryModal').style.display = 'flex';
+        }
+        function closeCategoryModal() { document.getElementById('categoryModal').style.display = 'none'; }
+
+        function saveCategory() {
+            if (!isAdmin) return;
+            const id = document.getElementById('editCategoryId').value;
+            const name = document.getElementById('inputCategoryName').value.trim();
+            if (!name) { alert('請填寫類別名稱！'); return; }
+
+            if (id) {
+                let cat = categories.find(c => c.id === id);
+                if (cat) cat.name = name;
+            } else {
+                const newId = 'cat_' + Date.now();
+                categories.push({ id: newId, name: name });
+            }
+            saveAndSync();
+            closeCategoryModal();
+        }
+
+        function deleteCategory(catId) {
+            if (!isAdmin) return;
+            if (confirm('確定要刪除此類別嗎？底下所屬的頻道也會一併被移除！')) {
+                channels = channels.filter(ch => ch.catId !== catId);
+                categories = categories.filter(c => c.id !== catId);
+                if (!channels.some(ch => ch.id === currentTab)) {
+                    currentTab = channels.length > 0 ? channels[0].id : '';
+                }
+                saveAndSync();
+            }
+        }
+
+        function openChannelModal(id = '', name = '', catId = '') {
+            if (!isAdmin) return;
+            const select = document.getElementById('inputChannelCategory');
+            select.innerHTML = '';
+            categories.forEach(cat => {
+                let selected = (cat.id === catId) ? 'selected' : '';
+                select.innerHTML += `<option value="${cat.id}" ${selected}>${cat.name}</option>`;
+            });
+            document.getElementById('editChannelId').value = id;
+            document.getElementById('inputChannelName').value = name;
+            document.getElementById('channelModalTitle').innerText = id ? '編輯頻道' : '新增頻道';
+            document.getElementById('channelModal').style.display = 'flex';
+        }
+        function closeChannelModal() { document.getElementById('channelModal').style.display = 'none'; }
+
+        function saveChannel() {
+            if (!isAdmin) return;
+            const id = document.getElementById('editChannelId').value;
+            const catId = document.getElementById('inputChannelCategory').value;
+            const name = document.getElementById('inputChannelName').value.trim();
+            if (!name) { alert('請填寫頻道名稱！'); return; }
+
+            if (id) {
+                let ch = channels.find(c => c.id === id);
+                if (ch) {
+                    ch.name = name;
+                    ch.catId = catId;
+                }
+            } else {
+                const newId = 'ch_' + Date.now();
+                channels.push({ id: newId, name: name, catId: catId });
+                db[newId] = [];
+                currentTab = newId;
+            }
+            saveAndSync();
+            closeChannelModal();
+        }
+
+        function deleteChannel(chId) {
+            if (!isAdmin) return;
+            if (confirm('確定要刪除此頻道及其所有卡片資料嗎？')) {
+                channels = channels.filter(ch => ch.id !== chId);
+                delete db[chId];
+                currentTab = channels.length > 0 ? channels[0].id : '';
+                saveAndSync();
+            }
+        }
+
+        function saveData() {
+            if (!isAdmin) return;
+            const index = parseInt(document.getElementById('editIndex').value);
+            const targetTab = document.getElementById('editTabKey').value || currentTab;
+            const name = document.getElementById('inputName').value.trim();
+            const color = document.getElementById('inputColor').value;
+            const effect = document.getElementById('inputEffect').value.trim();
+            const isSpoiler = document.getElementById('inputIsSpoiler').checked;
+            const spoilerText = document.getElementById('inputSpoilerContent').value.trim();
+            const named = document.getElementById('inputNamed').value.trim();
+
+            if (!name) { alert('請至少填寫名稱！'); return; }
+
+            let newItem = { name: name, color: color };
+            if (effect) newItem.effect = effect;
+            if (isSpoiler && spoilerText) {
+                let linkedSpoilerText = linkify(spoilerText);
+                newItem.spoiler = `<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>${linkedSpoilerText.replace(/\n/g, '<br>')}</p></details>`;
+            }
+            if (named) newItem.named = named;
+
+            let attrs = [];
+            document.querySelectorAll('.attr-row').forEach(row => {
+                const t = row.querySelector('.attr-text').value.trim();
+                const v = row.querySelector('.attr-val-input').value.trim();
+                if (t || v) attrs.push({ text: t || "屬性", val: v || "-" });
+            });
+            newItem.attrs = attrs;
+
+            if (!db[targetTab]) db[targetTab] = [];
+            if (index === -1) db[targetTab].push(newItem);
+            else db[targetTab][index] = newItem;
+
+            localStorage.setItem('division2_db_v21', JSON.stringify(db));
+            closeModal();
+            filterData();
+        }
+
+        function deleteData(tabKey, index) {
+            if (!isAdmin) return;
+            if (confirm('確定要刪除這筆資料嗎？')) {
+                db[tabKey].splice(index, 1);
+                localStorage.setItem('division2_db_v21', JSON.stringify(db));
+                filterData();
+            }
+        }
+
+        function saveAndSync() {
+            if (!isAdmin) return;
+            localStorage.setItem('division2_categories_v21', JSON.stringify(categories));
+            localStorage.setItem('division2_channels_v21', JSON.stringify(channels));
+            localStorage.setItem('division2_db_v21', JSON.stringify(db));
+            renderSidebar();
+            filterData();
+        }
+
+        renderSidebar();
+        filterData();
+    </script>
+</body>
+</html>
