@@ -46,7 +46,6 @@
         }
         .sidebar-btn:hover { color: #f2f3f5; }
 
-        /* 類別與頻道樹狀結構 */
         .category-group {
             margin-bottom: 6px;
         }
@@ -210,8 +209,7 @@
             background-color: rgba(88, 101, 242, 0.1);
         }
         
-        /* 品級顏色定義 */
-        .card h4 { margin: 0 0 8px 0; font-size: 17px; }
+        .card h4 { margin: 0 0 8px 0; font-size: 17px; display: flex; align-items: center; }
         .color-red { color: #ed4245 !important; }
         .color-gold { color: #faa61a !important; }
         .color-green { color: #248046 !important; }
@@ -287,7 +285,6 @@
         .btn-edit { background-color: #4f545c; color: #fff; }
         .btn-delete { background-color: #ed4245; color: #fff; }
 
-        /* Discord 風格純文字右鍵選單 */
         #dcContextMenu {
             display: none;
             position: fixed;
@@ -320,7 +317,6 @@
             margin: 4px 0;
         }
 
-        /* 彈出視窗共用樣式 */
         .modal {
             display: none;
             position: fixed;
@@ -396,7 +392,6 @@
         .btn-cancel { background-color: #4f545c; color: #fff; margin-right: 10px; }
         .btn-save { background-color: #248046; color: #fff; }
 
-        /* 手機版響應式 */
         @media (max-width: 768px) {
             body {
                 flex-direction: column;
@@ -444,7 +439,6 @@
         <div id="cardGrid" class="card-grid"></div>
     </div>
 
-    <!-- 右鍵選單 -->
     <div id="dcContextMenu">
         <div id="menuAddChannel" class="menu-item" onclick="handleMenuAddChannel()" style="display:none;">新增頻道</div>
         <div id="menuMoveUp" class="menu-item" onclick="handleMenuMoveUp()">往上移動</div>
@@ -461,6 +455,14 @@
             <input type="hidden" id="editIndex" value="-1">
             <input type="hidden" id="editTabKey" value="">
             
+            <label>核心屬性圖示:</label>
+            <select id="inputCoreIcon">
+                <option value="">無圖示</option>
+                <option value="red.png">火力 (紅色)</option>
+                <option value="yellow.png">電工 (黃色)</option>
+                <option value="blue.png">裝甲 (藍色)</option>
+            </select>
+
             <label>名稱:</label>
             <input type="text" id="inputName" placeholder="例如：聖艾爾摩引擎">
 
@@ -567,7 +569,6 @@
             }
         });
 
-        // 極簡防呆預設結構（當找不到 data.json 且無本機資料時使用）
         const defaultCategories = [{ id: "cat_default", name: "未分類" }];
         const defaultChannels = [{ id: "ch_default", name: "一般頻道", catId: "cat_default" }];
         const defaultDb = { "ch_default": [] };
@@ -582,7 +583,6 @@
         let draggedCardIndex = null;
         let copiedCardData = null;
 
-        // 初始化載入：優先讀取 data.json
         async function initData() {
             try {
                 let response = await fetch('data.json');
@@ -612,7 +612,6 @@
             currentTab = channels.length > 0 ? channels[0].id : '';
         }
 
-        // 匯出資料為 data.json 檔案
         function exportDataJson() {
             if (!isAdmin) return;
             const dataToExport = {
@@ -798,7 +797,12 @@
                         card.setAttribute('ondrop', `cardDrop(event, ${index})`);
                     }
 
-                    let html = `<h4 class="${item.color || 'color-gold'}">${item.name}</h4>`;
+                    let iconHtml = '';
+                    if (item.coreIcon) {
+                        iconHtml = `<img src="${item.coreIcon}" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; object-fit: contain;">`;
+                    }
+
+                    let html = `<h4 class="${item.color || 'color-gold'}">${iconHtml}${item.name}</h4>`;
                     if (item.effect) html += `<div style="font-size: 13px; color: #dbdee1; margin: 6px 0; white-space: pre-line;">${linkify(item.effect)}</div>`;
                     if (item.spoiler) html += `<div>${item.spoiler}</div>`;
                     if (item.attrs) {
@@ -831,6 +835,7 @@
             document.getElementById('modalTitle').innerText = '新增資料';
             document.getElementById('editIndex').value = '-1';
             document.getElementById('editTabKey').value = currentTab;
+            document.getElementById('inputCoreIcon').value = '';
             document.getElementById('inputName').value = '';
             document.getElementById('inputColor').value = 'color-gold';
             document.getElementById('inputEffect').value = '';
@@ -849,6 +854,7 @@
             document.getElementById('modalTitle').innerText = '編輯資料';
             document.getElementById('editIndex').value = index;
             document.getElementById('editTabKey').value = tabKey;
+            document.getElementById('inputCoreIcon').value = item.coreIcon || '';
             document.getElementById('inputName').value = item.name || '';
             document.getElementById('inputColor').value = item.color || 'color-gold';
             document.getElementById('inputEffect').value = item.effect || '';
@@ -964,6 +970,7 @@
             if (!isAdmin) return;
             const index = parseInt(document.getElementById('editIndex').value);
             const targetTab = document.getElementById('editTabKey').value || currentTab;
+            const coreIcon = document.getElementById('inputCoreIcon').value;
             const name = document.getElementById('inputName').value.trim();
             const color = document.getElementById('inputColor').value;
             const effect = document.getElementById('inputEffect').value.trim();
@@ -974,6 +981,7 @@
             if (!name) { alert('請至少填寫名稱！'); return; }
 
             let newItem = { name: name, color: color };
+            if (coreIcon) newItem.coreIcon = coreIcon;
             if (effect) newItem.effect = effect;
             if (isSpoiler && spoilerText) {
                 newItem.spoiler = `<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>${linkify(spoilerText).replace(/\n/g, '<br>')}</p></details>`;
@@ -1011,7 +1019,6 @@
             filterData();
         }
 
-        // 啟動執行
         initData();
     </script>
 </body>
