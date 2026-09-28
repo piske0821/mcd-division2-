@@ -226,27 +226,49 @@
             background-color: rgba(88, 101, 242, 0.1);
         }
         
-        .card h4 { margin: 0 0 8px 0; font-size: 17px; display: flex; align-items: center; }
+        .card h4 { margin: 0; font-size: 17px; }
+        .card-header-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+        .card-header-left { display: flex; align-items: center; gap: 6px; overflow: hidden; }
+        .card-weapon-img {
+            width: 100%;
+            max-height: 130px;
+            object-fit: contain;
+            border-radius: 6px;
+            background: #1e1f22;
+            display: block;
+        }
+
         .color-red { color: #ed4245 !important; }
         .color-gold { color: #faa61a !important; }
         .color-green { color: #248046 !important; }
         .color-gray { color: #949ba4 !important; }
 
+        /* 屬性緊鄰靠左對齊，支援左右雙圖示 */
         .attr-item {
             font-size: 13px;
             margin: 6px 0;
             display: flex;
-            flex-direction: column;
-            gap: 2px;
+            flex-direction: row;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 10px;
         }
         .attr-text-side {
             font-weight: bold;
-            color: #00b0f4; 
+            color: #00b0f4;
+            flex-shrink: 0;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .attr-val { 
             color: #b9bbbe; 
-            text-align: left;
-            word-break: break-word;
+            text-align: left; 
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .card details {
@@ -267,6 +289,7 @@
         .card a, .modal-content a {
             color: #00b0f4;
             text-decoration: underline;
+            word-break: break-all;
         }
         .card a:hover, .modal-content a:hover {
             color: #1dc0ff;
@@ -347,7 +370,7 @@
             background-color: #313338;
             padding: 25px;
             border-radius: 8px;
-            width: 450px;
+            width: 520px;
             max-height: 90vh;
             overflow-y: auto;
             color: #dbdee1;
@@ -376,7 +399,7 @@
         
         .attr-row {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             margin-bottom: 6px;
             align-items: center;
         }
@@ -472,16 +495,16 @@
             <input type="hidden" id="editIndex" value="-1">
             <input type="hidden" id="editTabKey" value="">
             
-            <label>核心屬性圖示:</label>
-            <select id="inputCoreIcon">
-                <option value="">無圖示</option>
-                <option value="red.png">火力 (紅色)</option>
-                <option value="yellow.png">電工 (黃色)</option>
-                <option value="blue.png">裝甲 (藍色)</option>
-            </select>
-
-            <label>名稱:</label>
+            <label>裝備名稱:</label>
             <input type="text" id="inputName" placeholder="例如：聖艾爾摩引擎">
+
+            <label>武器圖片 (更大尺寸，右鍵可清除):</label>
+            <div style="margin-bottom: 12px;">
+                <div id="weaponImgPreviewBox" style="width: 100%; height: 90px; background: #1e1f22; border: 1px dashed #5865f2; border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="document.getElementById('inputWeaponImgFile').click()" oncontextmenu="handleWeaponImageContextMenu(event)" title="點擊上傳武器大圖 (右鍵清除)">
+                    <span style="font-size: 13px; color: #949ba4;">＋ 點擊上傳武器大圖</span>
+                </div>
+                <input type="file" id="inputWeaponImgFile" accept="image/*" style="display:none;" onchange="handleWeaponImageUpload(this)">
+            </div>
 
             <label>裝備名稱顏色:</label>
             <select id="inputColor">
@@ -499,7 +522,7 @@
             </label>
             <textarea id="inputSpoilerContent" rows="3" placeholder="請在此輸入詳細解謎步驟..." style="display:none;"></textarea>
 
-            <label>屬性與取得管道列表:</label>
+            <label>屬性與取得管道列表 (支援左右雙小圖示，右鍵可清除):</label>
             <div id="attrContainer"></div>
             <button type="button" class="btn-add-attr" onclick="addAttrRow()">＋ 新增一條屬性</button>
 
@@ -599,6 +622,7 @@
         let draggedChannelId = null;
         let draggedCardIndex = null;
         let copiedCardData = null;
+        let currentWeaponImgBase64 = ''; 
 
         async function initData() {
             try {
@@ -651,12 +675,31 @@
             spoilerBox.style.display = this.checked ? 'block' : 'none';
         });
 
+        function handleWeaponImageUpload(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentWeaponImgBase64 = e.target.result;
+                    const previewBox = document.getElementById('weaponImgPreviewBox');
+                    previewBox.innerHTML = `<img src="${currentWeaponImgBase64}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function handleWeaponImageContextMenu(e) {
+            e.preventDefault();
+            if (currentWeaponImgBase64 && confirm('確定要清除這張武器大圖嗎？')) {
+                currentWeaponImgBase64 = '';
+                document.getElementById('weaponImgPreviewBox').innerHTML = `<span style="font-size: 13px; color: #949ba4;">＋ 點擊上傳武器大圖</span>`;
+                document.getElementById('inputWeaponImgFile').value = '';
+            }
+        }
+
         function linkify(inputText) {
             if (!inputText) return '';
-            let replacePattern1 = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
-            let replacedText = inputText.replace(replacePattern1, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-            let replacePattern2 = /(^|[^\/])(www\.[\S]+(\b|$))/gim;
-            return replacedText.replace(replacePattern2, '$1<a href="http://$2" target="_blank" rel="noopener noreferrer">$2</a>');
+            let replacePattern = /(\b(https?|ftp):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/gim;
+            return inputText.replace(replacePattern, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
         }
 
         function renderSidebar() {
@@ -814,17 +857,30 @@
                         card.setAttribute('ondrop', `cardDrop(event, ${index})`);
                     }
 
-                    let iconHtml = '';
-                    if (item.coreIcon) {
-                        iconHtml = `<img src="${item.coreIcon}" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; object-fit: contain;">`;
+                    let weaponImgHtml = '';
+                    if (item.weaponImg) {
+                        weaponImgHtml = `<img src="${item.weaponImg}" class="card-weapon-img">`;
                     }
 
-                    let html = `<h4 class="${item.color || 'color-gold'}">${iconHtml}${item.name}</h4>`;
+                    let html = `
+                        <div class="card-header-container">
+                            <h4>
+                                <div class="card-header-left"><span class="${item.color || 'color-gold'}">${item.name}</span></div>
+                            </h4>
+                            ${weaponImgHtml}
+                        </div>
+                    `;
                     if (item.effect) html += `<div style="font-size: 13px; color: #dbdee1; margin: 6px 0; white-space: pre-line;">${linkify(item.effect)}</div>`;
                     if (item.spoiler) html += `<div>${item.spoiler}</div>`;
                     if (item.attrs) {
                         item.attrs.forEach(attr => {
-                            html += `<div class="attr-item"><span class="attr-text-side">${attr.text}</span><span class="attr-val">${linkify(attr.val)}</span></div>`;
+                            let leftImgHtml = attr.leftImg ? `<img src="${attr.leftImg}" style="width: 16px; height: 16px; object-fit: contain; vertical-align: middle; display: inline-block;"> ` : '';
+                            let rightImgHtml = attr.rightImg ? ` <img src="${attr.rightImg}" style="width: 16px; height: 16px; object-fit: contain; vertical-align: middle; display: inline-block;">` : '';
+                            
+                            let attrTextContent = `${leftImgHtml}${attr.text}${rightImgHtml}`;
+                            let valContent = linkify(attr.val);
+
+                            html += `<div class="attr-item"><span class="attr-text-side">${attrTextContent}</span><span class="attr-val">${valContent}</span></div>`;
                         });
                     }
                     if (item.named) html += `<div><span class="badge">標籤：${item.named}</span></div>`;
@@ -852,8 +908,10 @@
             document.getElementById('modalTitle').innerText = '新增資料';
             document.getElementById('editIndex').value = '-1';
             document.getElementById('editTabKey').value = currentTab;
-            document.getElementById('inputCoreIcon').value = '';
+
             document.getElementById('inputName').value = '';
+            currentWeaponImgBase64 = '';
+            document.getElementById('weaponImgPreviewBox').innerHTML = `<span style="font-size: 13px; color: #949ba4;">＋ 點擊上傳武器大圖</span>`;
             document.getElementById('inputColor').value = 'color-gold';
             document.getElementById('inputEffect').value = '';
             document.getElementById('inputIsSpoiler').checked = false;
@@ -861,7 +919,7 @@
             document.getElementById('inputSpoilerContent').style.display = 'none';
             document.getElementById('inputNamed').value = '';
             document.getElementById('attrContainer').innerHTML = '';
-            addAttrRow('核心屬性', '');
+            addAttrRow('核心屬性', '', '', '');
             document.getElementById('addModal').style.display = 'flex';
         }
 
@@ -871,8 +929,17 @@
             document.getElementById('modalTitle').innerText = '編輯資料';
             document.getElementById('editIndex').value = index;
             document.getElementById('editTabKey').value = tabKey;
-            document.getElementById('inputCoreIcon').value = item.coreIcon || '';
+
             document.getElementById('inputName').value = item.name || '';
+            
+            currentWeaponImgBase64 = item.weaponImg || '';
+            const weaponPreviewBox = document.getElementById('weaponImgPreviewBox');
+            if (currentWeaponImgBase64) {
+                weaponPreviewBox.innerHTML = `<img src="${currentWeaponImgBase64}" style="width: 100%; height: 100%; object-fit: contain; border-radius: 4px;">`;
+            } else {
+                weaponPreviewBox.innerHTML = `<span style="font-size: 13px; color: #949ba4;">＋ 點擊上傳武器大圖</span>`;
+            }
+
             document.getElementById('inputColor').value = item.color || 'color-gold';
             document.getElementById('inputEffect').value = item.effect || '';
             
@@ -894,23 +961,73 @@
             container.innerHTML = '';
             if (item.attrs) {
                 item.attrs.forEach(attr => {
-                    let rawVal = attr.val.replace(/<a[^>]*href="([^"]*)"[^>]*>.*?<\/a>/gim, '$1');
-                    addAttrRow(attr.text, rawVal);
+                    addAttrRow(attr.text, attr.val, attr.leftImg || '', attr.rightImg || '');
                 });
             }
             document.getElementById('addModal').style.display = 'flex';
         }
 
-        function addAttrRow(text = '', val = '') {
+        function addAttrRow(text = '', val = '', leftImg = '', rightImg = '') {
             const container = document.getElementById('attrContainer');
             const row = document.createElement('div');
             row.className = 'attr-row';
+            row.dataset.leftImg = leftImg;
+            row.dataset.rightImg = rightImg;
+
+            let leftPreviewHtml = leftImg ? `<img src="${leftImg}" style="width: 20px; height: 20px; object-fit: contain; background: #111; border-radius: 3px;" title="左側圖示">` : `<span style="font-size: 10px; color: #949ba4;">左圖</span>`;
+            let rightPreviewHtml = rightImg ? `<img src="${rightImg}" style="width: 20px; height: 20px; object-fit: contain; background: #111; border-radius: 3px;" title="右側圖示">` : `<span style="font-size: 10px; color: #949ba4;">右圖</span>`;
+
             row.innerHTML = `
-                <input type="text" class="attr-text" placeholder="屬性名稱" value="${text}">
-                <input type="text" class="attr-val-input" placeholder="數值或說明" value="${val}">
+                <div class="left-img-box" style="display: flex; align-items: center; justify-content: center; cursor: pointer; width: 32px; height: 28px; background: #1e1f22; border: 1px solid #222; border-radius: 3px;" onclick="this.nextElementSibling.click()" oncontextmenu="handleAttrImgContextMenu(event, 'left')" title="點擊上傳左側圖示 (右鍵清除)">
+                    ${leftPreviewHtml}
+                </div>
+                <input type="file" accept="image/*" style="display:none;" onchange="handleAttrImgUpload(this, 'left')">
+
+                <input type="text" class="attr-text" placeholder="屬性名稱" value="${text}" style="width: 90px; margin: 0;">
+
+                <div class="right-img-box" style="display: flex; align-items: center; justify-content: center; cursor: pointer; width: 32px; height: 28px; background: #1e1f22; border: 1px solid #222; border-radius: 3px;" onclick="this.nextElementSibling.click()" oncontextmenu="handleAttrImgContextMenu(event, 'right')" title="點擊上傳右側圖示 (右鍵清除)">
+                    ${rightPreviewHtml}
+                </div>
+                <input type="file" accept="image/*" style="display:none;" onchange="handleAttrImgUpload(this, 'right')">
+
+                <input type="text" class="attr-val-input" placeholder="數值或說明" value="${val}" style="flex: 1; margin: 0;">
                 <button type="button" class="btn-remove-attr" onclick="this.parentElement.remove()">X</button>
             `;
             container.appendChild(row);
+        }
+
+        function handleAttrImgUpload(input, position) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const base64 = e.target.result;
+                    const row = input.closest('.attr-row');
+                    if (position === 'left') {
+                        row.dataset.leftImg = base64;
+                        row.querySelector('.left-img-box').innerHTML = `<img src="${base64}" style="width: 20px; height: 20px; object-fit: contain; background: #111; border-radius: 3px;">`;
+                    } else {
+                        row.dataset.rightImg = base64;
+                        row.querySelector('.right-img-box').innerHTML = `<img src="${base64}" style="width: 20px; height: 20px; object-fit: contain; background: #111; border-radius: 3px;">`;
+                    }
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function handleAttrImgContextMenu(e, position) {
+            e.preventDefault();
+            const row = e.target.closest('.attr-row');
+            if (position === 'left' && row.dataset.leftImg) {
+                if (confirm('確定要清除左側圖示嗎？')) {
+                    row.dataset.leftImg = '';
+                    row.querySelector('.left-img-box').innerHTML = `<span style="font-size: 10px; color: #949ba4;">左圖</span>`;
+                }
+            } else if (position === 'right' && row.dataset.rightImg) {
+                if (confirm('確定要清除右側圖示嗎？')) {
+                    row.dataset.rightImg = '';
+                    row.querySelector('.right-img-box').innerHTML = `<span style="font-size: 10px; color: #949ba4;">右圖</span>`;
+                }
+            }
         }
 
         function closeModal() { document.getElementById('addModal').style.display = 'none'; }
@@ -987,7 +1104,6 @@
             if (!isAdmin) return;
             const index = parseInt(document.getElementById('editIndex').value);
             const targetTab = document.getElementById('editTabKey').value || currentTab;
-            const coreIcon = document.getElementById('inputCoreIcon').value;
             const name = document.getElementById('inputName').value.trim();
             const color = document.getElementById('inputColor').value;
             const effect = document.getElementById('inputEffect').value.trim();
@@ -998,7 +1114,7 @@
             if (!name) { alert('請至少填寫名稱！'); return; }
 
             let newItem = { name: name, color: color };
-            if (coreIcon) newItem.coreIcon = coreIcon;
+            if (currentWeaponImgBase64) newItem.weaponImg = currentWeaponImgBase64;
             if (effect) newItem.effect = effect;
             if (isSpoiler && spoilerText) {
                 newItem.spoiler = `<details><summary>點擊展開攻略 (防劇透)</summary><p style='margin: 5px 0 0 0;'>${linkify(spoilerText).replace(/\n/g, '<br>')}</p></details>`;
@@ -1009,7 +1125,16 @@
             document.querySelectorAll('.attr-row').forEach(row => {
                 const t = row.querySelector('.attr-text').value.trim();
                 const v = row.querySelector('.attr-val-input').value.trim();
-                if (t || v) attrs.push({ text: t || "屬性", val: v || "-" });
+                const leftImg = row.dataset.leftImg || '';
+                const rightImg = row.dataset.rightImg || '';
+                if (t || v || leftImg || rightImg) {
+                    attrs.push({ 
+                        text: t || "屬性", 
+                        val: v || "", 
+                        leftImg: leftImg, 
+                        rightImg: rightImg 
+                    });
+                }
             });
             newItem.attrs = attrs;
 
